@@ -30,7 +30,7 @@
 
 ;;; Code:
 
-(defvar ps/mullvad-servers
+(defcustom ps/mullvad-servers
   '(("London" . "gb4-wireguard")
     ("Madrid" . "es-mad-wg-101")
     ("Malmö" . "se1-wireguard")
@@ -38,15 +38,19 @@
     ("New York" . "us276-wireguard")
     ("São Paulo" . "br1-wireguard")
     ("Switzerland" . "ch5-wireguard"))
-  "Association list of cities and optimal servers.")
+  "Association list of cities and optimal servers."
+  :type '(alist :key-type string :value-type string)
+  :group 'mullvad)
 
-(defvar ps/mullvad-websites
+(defcustom ps/mullvad-websites
   '(("Library Genesis" . "Malmö")
     ("HathiTrust" . "New York")
     ("Criterion Channel" . "New York")
     ("Pirate Bay" . "Malmö")
     ("Wise" . "Madrid"))
-  "Association list of websites and optimal server cities.")
+  "Association list of websites and optimal server cities."
+  :type '(alist :key-type string :value-type string)
+  :group 'mullvad)
 
 (defun ps/mullvad-connect-to-server (server)
   "Connect to SERVER.
