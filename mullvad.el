@@ -23,6 +23,11 @@
 
 ;; commentary
 
+;; This package collects a few functions for interfacing with Mullvad, a
+;; VPN service. To use these functions, you must first run `mullvad
+;; account login [your account number]' in the terminal. To find your
+;; account number, go to "settings" > "account".
+
 ;;; Code:
 
 (defvar ps/mullvad-servers
