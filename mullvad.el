@@ -30,7 +30,7 @@
 
 ;;; Code:
 
-(defcustom ps/mullvad-servers
+(defcustom mullvad-servers
   '(("London" . "gb4-wireguard")
     ("Madrid" . "es-mad-wg-101")
     ("Malmö" . "se1-wireguard")
@@ -42,7 +42,7 @@
   :type '(alist :key-type string :value-type string)
   :group 'mullvad)
 
-(defcustom ps/mullvad-websites
+(defcustom mullvad-websites
   '(("Library Genesis" . "Malmö")
     ("HathiTrust" . "New York")
     ("Criterion Channel" . "New York")
@@ -52,19 +52,19 @@
   :type '(alist :key-type string :value-type string)
   :group 'mullvad)
 
-(defun ps/mullvad-connect-to-server (server)
+(defun mullvad-connect-to-server (server)
   "Connect to SERVER.
 Prompt the user to select from a list of servers and connection
 durations, and connect to the server for that duration.
 
-The list of servers is defined in `ps/mullvad-servers'."
+The list of servers is defined in `mullvad-servers'."
   (interactive
    (list
     (completing-read
      "Select server: "
-     ps/mullvad-servers)))
-  (let* ((duration (call-interactively 'ps/mullvad-disconnect-after))
-	 (server (alist-get server ps/mullvad-servers nil nil #'string=))
+     mullvad-servers)))
+  (let* ((duration (call-interactively 'mullvad-disconnect-after))
+	 (server (alist-get server mullvad-servers nil nil #'string=))
 	 (connection (replace-regexp-in-string
 		      "Setting location constraint to \\(.*\\)\n.*\n.*" "\\1"
 		      (shell-command-to-string (format
@@ -73,21 +73,21 @@ The list of servers is defined in `ps/mullvad-servers'."
     (message (concat (format "Connected to Mullvad server `%s'." connection)
 		     (when duration (format " Disconnecting in %s minute(s)." duration))))))
 
-(defun ps/mullvad-connect-to-website (website)
+(defun mullvad-connect-to-website (website)
   "Connect to WEBSITE.
 Prompt the user to select from a list of websites and connection
 durations, set optimal VPN server for it, and connect to it for-
 that duration.
 
-The list of websites is defined in `ps/mullvad-websites'."
+The list of websites is defined in `mullvad-websites'."
   (interactive
    (list
     (completing-read
      "Select website: "
-     ps/mullvad-websites)))
-  (let* ((duration (call-interactively 'ps/mullvad-disconnect-after))
-	 (city (alist-get website ps/mullvad-websites nil nil #'string=))
-	 (server (alist-get city ps/mullvad-servers nil nil #'string=))
+     mullvad-websites)))
+  (let* ((duration (call-interactively 'mullvad-disconnect-after))
+	 (city (alist-get website mullvad-websites nil nil #'string=))
+	 (server (alist-get city mullvad-servers nil nil #'string=))
 	 (connection (replace-regexp-in-string
 		      "Setting location constraint to \\(.*\\)\n.*\n.*" "\\1"
 		      (shell-command-to-string (format
@@ -96,13 +96,13 @@ The list of websites is defined in `ps/mullvad-websites'."
     (message (concat (format "Connected to Mullvad server `%s'." connection)
 		     (when duration (format " Disconnecting in %s minute(s)." duration))))))
 
-(defun ps/mullvad-disconnect ()
+(defun mullvad-disconnect ()
   "Disconnect from server."
   (interactive)
   (shell-command "mullvad disconnect")
   (message "Disconnected from Mullvad server."))
 
-(defun ps/mullvad-disconnect-after (duration)
+(defun mullvad-disconnect-after (duration)
   "End connection to Mullvad VPN server after DURATION minutes."
   (interactive
    (list (completing-read
@@ -112,12 +112,12 @@ The list of websites is defined in `ps/mullvad-websites'."
     (setq duration (read-string "Enter duration (minutes): ")))
   (unless (equal duration "unlimited")
     ;; If a previous timer is running, cancel it.
-    (cancel-function-timers #'ps/mullvad-disconnect)
+    (cancel-function-timers #'mullvad-disconnect)
     ;; Now run a new timer.
     (run-with-timer
      (* (string-to-number duration) 60)
      nil
-     #'ps/mullvad-disconnect)
+     #'mullvad-disconnect)
     duration))
 
 (provide 'mullvad)
