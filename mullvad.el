@@ -31,13 +31,12 @@
 ;;; Code:
 
 (defcustom mullvad-servers
-  '(("London" . "gb4-wireguard")
+  '(("London" . "gb-lon-wg-001")
     ("Madrid" . "es-mad-wg-101")
     ("Malmö" . "se1-wireguard")
     ("Frankfurt" . "de5-wireguard")
-    ("New York" . "us276-wireguard")
-    ("São Paulo" . "br1-wireguard")
-    ("Switzerland" . "ch5-wireguard"))
+    ("New York" . "us-nyc-wg-601")
+    ("São Paulo" . "br1-wireguard"))
   "Association list of cities and optimal servers."
   :type '(alist :key-type string :value-type string)
   :group 'mullvad)
