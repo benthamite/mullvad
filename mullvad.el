@@ -84,7 +84,7 @@ The association between websites and cities is defined in
      "Select website: "
      mullvad-websites-and-cities)))
   (let ((city (alist-get website mullvad-websites-and-cities nil nil #'string=)))
-    (mullvad-connect-to-server city)))
+    (mullvad-connect-to-city city)))
 
 (defun mullvad-disconnect ()
   "Disconnect from server."
