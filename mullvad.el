@@ -30,7 +30,7 @@
 
 ;;; Code:
 
-(defcustom mullvad-servers
+(defcustom mullvad-cities-and-servers
   '(("London" . "gb-lon-wg-001")
     ("Madrid" . "es-mad-wg-101")
     ("Malmö" . "se1-wireguard")
@@ -41,7 +41,7 @@
   :type '(alist :key-type string :value-type string)
   :group 'mullvad)
 
-(defcustom mullvad-websites
+(defcustom mullvad-websites-and-cities
   '(("Library Genesis" . "Malmö")
     ("HathiTrust" . "New York")
     ("Criterion Channel" . "New York")
