@@ -30,26 +30,22 @@
 
 ;;; Code:
 
-(defcustom mullvad-cities-and-servers
+(defvar mullvad-cities-and-servers
   '(("London" . "gb-lon-wg-001")
     ("Madrid" . "es-mad-wg-101")
-    ("Malmö" . "se1-wireguard")
-    ("Frankfurt" . "de5-wireguard")
+    ("Malmö" . "se-sto-wg-001")
+    ("Frankfurt" . "de-fra-wg-001")
     ("New York" . "us-nyc-wg-601")
-    ("São Paulo" . "br1-wireguard"))
-  "Association list of cities and optimal servers."
-  :type '(alist :key-type string :value-type string)
-  :group 'mullvad)
+    ("São Paulo" . "br-sao-wg-001"))
+  "Association list of cities and optimal servers.")
 
-(defcustom mullvad-websites-and-cities
+(defvar mullvad-websites-and-cities
   '(("Library Genesis" . "Malmö")
     ("HathiTrust" . "New York")
     ("Criterion Channel" . "New York")
     ("Pirate Bay" . "Malmö")
     ("Wise" . "Madrid"))
-  "Association list of websites and optimal server cities."
-  :type '(alist :key-type string :value-type string)
-  :group 'mullvad)
+  "Association list of websites and optimal server cities.")
 
 (defun mullvad-connect-to-city (city)
   "Connect to server associated with CITY.
