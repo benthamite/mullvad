@@ -51,19 +51,21 @@
   :type '(alist :key-type string :value-type string)
   :group 'mullvad)
 
-(defun mullvad-connect-to-server (server)
-  "Connect to SERVER.
-Prompt the user to select from a list of servers and connection
-durations, and connect to the server for that duration.
+(defun mullvad-connect-to-city (city)
+  "Connect to server associated with CITY.
+Prompt the user to select from a list of cities and connection
+durations, and connect to the corresponding server for that
+duration.
 
-The list of servers is defined in `mullvad-servers'."
+The association between cities and servers is defined in
+`mullvad-servers'."
   (interactive
    (list
     (completing-read
      "Select server: "
-     mullvad-servers)))
+     mullvad-cities-and-servers)))
   (let* ((duration (call-interactively 'mullvad-disconnect-after))
-	 (server (alist-get server mullvad-servers nil nil #'string=))
+	 (server (alist-get city mullvad-servers nil nil #'string=))
 	 (connection (replace-regexp-in-string
 		      "Setting location constraint to \\(.*\\)\n.*\n.*" "\\1"
 		      (shell-command-to-string (format
@@ -73,27 +75,20 @@ The list of servers is defined in `mullvad-servers'."
 		     (when duration (format " Disconnecting in %s minute(s)." duration))))))
 
 (defun mullvad-connect-to-website (website)
-  "Connect to WEBSITE.
+  "Connect to server associated with WEBSITE.
 Prompt the user to select from a list of websites and connection
-durations, set optimal VPN server for it, and connect to it for-
-that duration.
+durations, and connect to the corresponding server for that
+duration.
 
-The list of websites is defined in `mullvad-websites'."
+The association between websites and cities is defined in
+`mullvad-websites-and-cities'."
   (interactive
    (list
     (completing-read
      "Select website: "
-     mullvad-websites)))
-  (let* ((duration (call-interactively 'mullvad-disconnect-after))
-	 (city (alist-get website mullvad-websites nil nil #'string=))
-	 (server (alist-get city mullvad-servers nil nil #'string=))
-	 (connection (replace-regexp-in-string
-		      "Setting location constraint to \\(.*\\)\n.*\n.*" "\\1"
-		      (shell-command-to-string (format
-						"mullvad relay set hostname %s; mullvad connect"
-						server)))))
-    (message (concat (format "Connected to Mullvad server `%s'." connection)
-		     (when duration (format " Disconnecting in %s minute(s)." duration))))))
+     mullvad-websites-and-cities)))
+  (let ((city (alist-get website mullvad-websites-and-cities nil nil #'string=)))
+    (mullvad-connect-to-server city)))
 
 (defun mullvad-disconnect ()
   "Disconnect from server."
@@ -108,7 +103,7 @@ The list of websites is defined in `mullvad-websites'."
 	  "Select duration (minutes): "
 	  '("1" "5" "10" "30" "60" "120" "custom" "unlimited"))))
   (when (equal duration "custom")
-    (setq duration (read-string "Enter duration (minutes): ")))
+    (setq duration (read-string "Select duration (minutes): ")))
   (unless (equal duration "unlimited")
     ;; If a previous timer is running, cancel it.
     (cancel-function-timers #'mullvad-disconnect)
