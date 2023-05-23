@@ -61,7 +61,7 @@ The association between cities and servers is defined in
      "Select server: "
      mullvad-cities-and-servers)))
   (let* ((duration (call-interactively 'mullvad-disconnect-after))
-	 (server (alist-get city mullvad-servers nil nil #'string=))
+	 (server (alist-get city mullvad-cities-and-servers nil nil #'string=))
 	 (connection (replace-regexp-in-string
 		      "Setting location constraint to \\(.*\\)\n.*\n.*" "\\1"
 		      (shell-command-to-string (format
