@@ -21,7 +21,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-;; commentary
+;;; Commentary:
 
 ;; This package collects a few functions for interfacing with Mullvad, a
 ;; VPN service. To use these functions, you must first run `mullvad
