@@ -47,10 +47,10 @@
     ("Wise" . "Madrid"))
   "Association list of websites and optimal server cities.")
 
-(defun mullvad-connect-to-city (city)
-  "Connect to server associated with CITY.
+(defun mullvad-connect-to-city (city &optional duration)
+  "Connect to server associated with CITY for DURATION.
 Prompt the user to select from a list of cities and connection
-durations, and connect to the corresponding server for that
+duration, and connect to the corresponding server for that
 duration.
 
 The association between cities and servers is defined in
@@ -60,7 +60,7 @@ The association between cities and servers is defined in
     (completing-read
      "Select server: "
      mullvad-cities-and-servers)))
-  (let* ((duration (call-interactively 'mullvad-disconnect-after))
+  (let* ((duration (or duration (call-interactively 'mullvad-disconnect-after)))
 	 (server (alist-get city mullvad-cities-and-servers nil nil #'string=))
 	 (connection (replace-regexp-in-string
 		      "Setting location constraint to \\(.*\\)\n.*\n.*" "\\1"
@@ -70,10 +70,10 @@ The association between cities and servers is defined in
     (message (concat (format "Connected to Mullvad server `%s'." connection)
 		     (when duration (format " Disconnecting in %s minute(s)." duration))))))
 
-(defun mullvad-connect-to-website (website)
-  "Connect to server associated with WEBSITE.
+(defun mullvad-connect-to-website (website &optional duration)
+  "Connect to server associated with WEBSITE for DURATION.
 Prompt the user to select from a list of websites and connection
-durations, and connect to the corresponding server for that
+duration, and connect to the corresponding server for that
 duration.
 
 The association between websites and cities is defined in
@@ -84,7 +84,7 @@ The association between websites and cities is defined in
      "Select website: "
      mullvad-websites-and-cities)))
   (let ((city (alist-get website mullvad-websites-and-cities nil nil #'string=)))
-    (mullvad-connect-to-city city)))
+    (mullvad-connect-to-city city duration)))
 
 (defun mullvad-disconnect ()
   "Disconnect from server."
