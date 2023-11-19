@@ -30,6 +30,8 @@
 
 ;;; Code:
 
+;;;; User options
+
 (defvar mullvad-cities-and-servers
   '(("London" . "gb-lon-wg-001")
     ("Madrid" . "es-mad-wg-101")
@@ -47,30 +49,41 @@
     ("Wise" . "Madrid"))
   "Association list of websites and optimal server cities.")
 
-(defun mullvad-connect-to-city (city &optional duration)
-  "Connect to server associated with CITY for DURATION.
+;;;; Functions
+
+;;;###autoload
+(defun mullvad-dwim ()
+  "Connect if disconnected, and vice versa."
+  (interactive)
+  (if (mullvad-is-disconnected-p)
+      (call-interactively #'mullvad-connect)
+    (mullvad-disconnect)))
+
+;;;###autoload
+(defun mullvad-connect (connection)
+  "Connect to a Mullvad server, prompting the user for a CONNECTION type."
+  (interactive
+   (list
+    (completing-read "Select connection: " '(city website))))
+  (pcase connection
+    ("city" (call-interactively #'mullvad-connect-to-city))
+    ("website" (call-interactively #'mullvad-connect-to-website))))
+
+(defun mullvad-connect-to-city (&optional city)
+  "Connect to server associated with CITY for a certain duration.
 Prompt the user to select from a list of cities and connection
 duration, and connect to the corresponding server for that
 duration.
 
 The association between cities and servers is defined in
-`mullvad-servers'."
-  (interactive
-   (list
-    (completing-read
-     "Select server: "
-     mullvad-cities-and-servers)))
-  (let* ((duration (or duration (call-interactively 'mullvad-disconnect-after)))
-	 (server (alist-get city mullvad-cities-and-servers nil nil #'string=))
-	 (connection (replace-regexp-in-string
-		      "Setting location constraint to \\(.*\\)\n.*\n.*" "\\1"
-		      (shell-command-to-string (format
-						"mullvad relay set hostname %s; mullvad connect"
-						server)))))
-    (message (concat (format "Connected to Mullvad server `%s'." connection)
-		     (when duration (format " Disconnecting in %s minute(s)." duration))))))
+`mullvad-cities-and-servers'."
+  (interactive)
+  (let ((server (mullvad-connect-to-city-or-website 'city city)))
+    (shell-command (format "mullvad relay set hostname %s; mullvad connect" server))
+    (call-interactively #'mullvad-disconnect-after)
+    (mullvad-status)))
 
-(defun mullvad-connect-to-website (website &optional duration)
+(defun mullvad-connect-to-website (&optional website)
   "Connect to server associated with WEBSITE for DURATION.
 Prompt the user to select from a list of websites and connection
 duration, and connect to the corresponding server for that
@@ -78,19 +91,26 @@ duration.
 
 The association between websites and cities is defined in
 `mullvad-websites-and-cities'."
-  (interactive
-   (list
-    (completing-read
-     "Select website: "
-     mullvad-websites-and-cities)))
-  (let ((city (alist-get website mullvad-websites-and-cities nil nil #'string=)))
-    (mullvad-connect-to-city city duration)))
+  (interactive)
+  (let ((city (mullvad-connect-to-city-or-website 'website website)))
+    (mullvad-connect-to-city city)))
+
+(defun mullvad-connect-to-city-or-website (connection &optional selection)
+  "Connect to a Mullvad server using CONNECTION type.
+Prompt the user for a SELECTION if necessary. Disconnect if already connected."
+  (mullvad-disconnect)
+  (let* ((var (pcase connection
+		('city mullvad-cities-and-servers)
+		('website mullvad-websites-and-cities)))
+	 (selection (or selection (completing-read "Select: " var))))
+    (alist-get selection var nil nil #'string=)))
 
 (defun mullvad-disconnect ()
-  "Disconnect from server."
+  "Disconnect from server if currently connected."
   (interactive)
-  (shell-command "mullvad disconnect")
-  (message "Disconnected from Mullvad server."))
+  (unless (mullvad-is-disconnected-p)
+    (shell-command "mullvad disconnect")
+    (mullvad-status)))
 
 (defun mullvad-disconnect-after (duration)
   "End connection to Mullvad VPN server after DURATION minutes."
@@ -98,17 +118,24 @@ The association between websites and cities is defined in
    (list (completing-read
 	  "Select duration (minutes): "
 	  '("1" "5" "10" "30" "60" "120" "custom" "unlimited"))))
-  (when (equal duration "custom")
+  (when (string= duration "custom")
     (setq duration (read-string "Select duration (minutes): ")))
+  (cancel-function-timers #'mullvad-disconnect)
   (unless (equal duration "unlimited")
-    ;; If a previous timer is running, cancel it.
-    (cancel-function-timers #'mullvad-disconnect)
-    ;; Now run a new timer.
     (run-with-timer
      (* (string-to-number duration) 60)
      nil
      #'mullvad-disconnect)
     duration))
+
+(defun mullvad-status ()
+  "Get status of connection."
+  (interactive)
+  (message (string-trim (shell-command-to-string "mullvad status"))))
+
+(defun mullvad-is-disconnected-p ()
+  "Return non-nil if disconnected from Mullvad server."
+  (string-match-p "Disconnected" (mullvad-status)))
 
 (transient-define-prefix mullvad-dispatch ()
   "Dispatch a `mullvad' command."
@@ -123,5 +150,6 @@ The association between websites and cities is defined in
     ]
    ]
   )
+
 (provide 'mullvad)
 ;;; mullvad.el ends here
