@@ -30,6 +30,8 @@
 
 ;;; Code:
 
+(require 'transient)
+
 ;;;; User options
 
 (defvar mullvad-cities-and-servers
