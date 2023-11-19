@@ -67,6 +67,15 @@
 
 ;;;; Functions
 
+;;;;; General
+
+(defun mullvad-status ()
+  "Get status of connection."
+  (interactive)
+  (message (string-trim
+	    (shell-command-to-string
+	     (format "%s status" mullvad-executable)))))
+
 ;;;###autoload
 (defun mullvad-dwim ()
   "Connect if disconnected, and vice versa."
@@ -74,6 +83,13 @@
   (if (mullvad-is-disconnected-p)
       (call-interactively #'mullvad-connect)
     (mullvad-disconnect)))
+
+(defun mullvad-check-executable-exists ()
+  "Check that the `mullvad' executable is present in the system."
+  (unless (executable-find mullvad-executable)
+    (user-error "Mullvad not found. Please make sure it is installed and set `mullvad-executable' accordingly")))
+
+;;;;; Connect
 
 ;;;###autoload
 (defun mullvad-connect (connection)
@@ -87,15 +103,10 @@
     ("city" (call-interactively #'mullvad-connect-to-city))
     ("website" (call-interactively #'mullvad-connect-to-website))))
 
-(defun mullvad-check-executable-exists ()
-  "Check that the `mullvad' executable is present in the system."
-  (unless (executable-find mullvad-executable)
-    (user-error "Mullvad not found, please install it first")))
-
 (defun mullvad-connect-to-city (&optional city)
   "Connect to server associated with CITY for a certain duration.
 Prompt the user to select from a list of cities and connection
-duration, and connect to the corresponding server for that
+durations, and connect to the corresponding server for that
 duration.
 
 The association between cities and servers is defined in
@@ -129,29 +140,12 @@ Prompt the user for a SELECTION if necessary. Disconnect if already connected."
 	 (selection (or selection (completing-read "Select: " var))))
     (alist-get selection var nil nil #'string=)))
 
-;; TODO: develop this
-(defun mullvad-async-shell-command (command on-finish)
-  "Execute shell COMMAND asynchronously in the background.
-
-ON-FINISH is the callback function called with the result
-when the process sentinels."
-
-  ;; Start the process
-  (let ((process (start-process-shell-command "mullvad-process" nil command)))
-    
-    ;; Sentinels is Emacs' way of handling events from subprocesses
-    (set-process-sentinel process
-                          (lambda (process signal)
-
-                            ;; If the process has exited
-                            (when (memq (process-status process) '(exit signal))
-
-                              ;; Call the callback function
-                              (funcall on-finish (process-exit-status process)))))))
+;;;;; Disconnect
 
 (defun mullvad-disconnect ()
   "Disconnect from server if currently connected."
   (interactive)
+  (mullvad-check-executable-exists)
   (unless (mullvad-is-disconnected-p)
     (shell-command (format "%s disconnect" mullvad-executable))
     (mullvad-status)))
@@ -169,16 +163,28 @@ when the process sentinels."
     (run-with-timer
      (* (string-to-number duration) 60) nil #'mullvad-disconnect)))
 
-(defun mullvad-status ()
-  "Get status of connection."
-  (interactive)
-  (message (string-trim
-	    (shell-command-to-string
-	     (format "%s status" mullvad-executable)))))
-
 (defun mullvad-is-disconnected-p ()
   "Return non-nil if disconnected from Mullvad server."
   (string-match-p "Disconnected" (mullvad-status)))
+
+;;;;; Async
+
+;; TODO: develop this
+(defun mullvad-async-shell-command (command on-finish)
+  "Execute shell COMMAND asynchronously in the background.
+ON-FINISH is the callback function called with the result
+when the process sentinels."
+  ;; Start the process
+  (let ((process (start-process-shell-command "mullvad-process" nil command)))
+    ;; Sentinels is Emacs' way of handling events from subprocesses
+    (set-process-sentinel process
+                          (lambda (process signal)
+                            ;; If the process has exited
+                            (when (memq (process-status process) '(exit signal))
+                              ;; Call the callback function
+                              (funcall on-finish (process-exit-status process)))))))
+
+;;;;; Tab-bar
 
 ;; TODO: develop this
 (defun mullvad-update-tab-bar ()
@@ -186,16 +192,21 @@ when the process sentinels."
   
   (setq global-mode-string (concat global-mode-string " | " (mullvad-status))))
 
+;;;;; Dispatcher
+
 (transient-define-prefix mullvad-dispatch ()
   "Dispatch a `mullvad' command."
-  [["Mullvad"
-    ("m" "dwim"                          mullvad-dwim)
-    ("c" "connect"                       mullvad-connect)
-    ("w" "connect to website"            mullvad-connect-to-website)
-    ("y" "connect to city"               mullvad-connect-to-city)
-    ("d" "disconnect"                    mullvad-disconnect)
-    ("a" "disconnect after"              mullvad-disconnect-after)
-    ("s" "status"                        mullvad-status)
+  [["connect"
+    ("c" "to city"            mullvad-connect-to-city)
+    ("w" "to website"         mullvad-connect-to-website)
+    ]
+   ["disconnect"
+    ("n" "now"                mullvad-disconnect)
+    ("l" "later"              mullvad-disconnect-after)
+    ]
+   [""
+    ("d" "dwim"               mullvad-dwim)
+    ("s" "status"             mullvad-status)
     ]
    ]
   )
