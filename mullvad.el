@@ -1,10 +1,8 @@
-;;; mullvad.el --- Convenience functions for the VPN program Mullvad -*- lexical-binding: t -*-
+;;; mullvad.el --- Convenience functions for Mullvad -*- lexical-binding: t -*-
 
 ;; Author: Pablo Stafforini
 ;; Maintainer: Pablo Stafforini
 ;; Version: 0.1
-;; Keywords: convenience
-
 
 ;; This file is not part of GNU Emacs
 
@@ -24,9 +22,11 @@
 ;;; Commentary:
 
 ;; This package collects a few functions for interfacing with Mullvad, a
-;; VPN service. To use these functions, you must first run `mullvad
-;; account login [your account number]' in the terminal. To find your
-;; account number, go to "settings" > "account".
+;; VPN service.
+
+;; To use these functions, you must have `mullvad' installed and have run
+;; `mullvad account login [your account number]' in the terminal. To find your
+;; account number, go to "settings" > "account" in the graphical interface.
 
 ;;; Code:
 
