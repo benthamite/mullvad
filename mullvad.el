@@ -85,7 +85,7 @@
     (mullvad-disconnect)))
 
 (defun mullvad-check-executable-exists ()
-  "Check that the `mullvad' executable is present in the system."
+  "Check that the `mullvad' executable is present."
   (unless (executable-find mullvad-executable)
     (user-error "Mullvad not found. Please make sure it is installed and set `mullvad-executable' accordingly")))
 
@@ -121,7 +121,7 @@ The association between cities and servers is defined in
 (defun mullvad-connect-to-website (&optional website)
   "Connect to server associated with WEBSITE for DURATION.
 Prompt the user to select from a list of websites and connection
-duration, and connect to the corresponding server for that
+durations, and connect to the corresponding server for that
 duration.
 
 The association between websites and cities is defined in
@@ -143,7 +143,7 @@ Prompt the user for a SELECTION if necessary. Disconnect if already connected."
 ;;;;; Disconnect
 
 (defun mullvad-disconnect ()
-  "Disconnect from server if currently connected."
+  "Disconnect from the server if currently connected."
   (interactive)
   (mullvad-check-executable-exists)
   (unless (mullvad-is-disconnected-p)
@@ -151,7 +151,7 @@ Prompt the user for a SELECTION if necessary. Disconnect if already connected."
     (mullvad-status)))
 
 (defun mullvad-disconnect-after (duration)
-  "End connection to Mullvad VPN server after DURATION minutes."
+  "Disconnect from server after DURATION, in minutes."
   (interactive
    (list (completing-read
 	  "Select duration (minutes): "
@@ -164,7 +164,7 @@ Prompt the user for a SELECTION if necessary. Disconnect if already connected."
      (* (string-to-number duration) 60) nil #'mullvad-disconnect)))
 
 (defun mullvad-is-disconnected-p ()
-  "Return non-nil if disconnected from Mullvad server."
+  "Return t iff not connected to server."
   (string-match-p "Disconnected" (mullvad-status)))
 
 ;;;;; Async
