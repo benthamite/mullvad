@@ -167,10 +167,7 @@ when the process sentinels."
   (cancel-function-timers #'mullvad-disconnect)
   (unless (equal duration "unlimited")
     (run-with-timer
-     (* (string-to-number duration) 60)
-     nil
-     #'mullvad-disconnect)
-    duration))
+     (* (string-to-number duration) 60) nil #'mullvad-disconnect)))
 
 (defun mullvad-status ()
   "Get status of connection."
