@@ -161,11 +161,11 @@ when the process sentinels."
   (interactive
    (list (completing-read
 	  "Select duration (minutes): "
-	  '("1" "5" "10" "30" "60" "120" "custom" "unlimited"))))
+	  '("1" "5" "10" "30" "60" "120" "∞" "custom"))))
   (when (string= duration "custom")
     (setq duration (read-string "Select duration (minutes): ")))
   (cancel-function-timers #'mullvad-disconnect)
-  (unless (equal duration "unlimited")
+  (unless (equal duration "∞")
     (run-with-timer
      (* (string-to-number duration) 60) nil #'mullvad-disconnect)))
 
