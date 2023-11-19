@@ -38,6 +38,11 @@
   "Convenience functions for interfacing with `mullvad'."
   :group 'emacs)
 
+(defcustom mullvad-executable "mullvad"
+  "Path to the `mullvad' executable."
+  :type 'string
+  :group 'mullvad)
+
 (defcustom mullvad-cities-and-servers
   '(("London" . "gb-lon-wg-001")
     ("Madrid" . "es-mad-wg-101")
@@ -74,7 +79,10 @@
   "Connect to a Mullvad server, prompting the user for a CONNECTION type."
   (interactive
    (list
-    (completing-read "Select connection: " '(city website))))
+    (progn
+      (unless (executable-find mullvad-executable)
+	(error "Mullvad not found, please install it first"))
+      (completing-read "Select connection: " '(city website)))))
   (pcase connection
     ("city" (call-interactively #'mullvad-connect-to-city))
     ("website" (call-interactively #'mullvad-connect-to-website))))
@@ -89,7 +97,8 @@ The association between cities and servers is defined in
 `mullvad-cities-and-servers'."
   (interactive)
   (let ((server (mullvad-connect-to-city-or-website 'city city)))
-    (shell-command (format "mullvad relay set hostname %s; mullvad connect" server))
+    (shell-command (format "%s relay set hostname %s; mullvad connect"
+			   mullvad-executable server))
     (call-interactively #'mullvad-disconnect-after)
     (mullvad-status)))
 
@@ -119,7 +128,7 @@ Prompt the user for a SELECTION if necessary. Disconnect if already connected."
   "Disconnect from server if currently connected."
   (interactive)
   (unless (mullvad-is-disconnected-p)
-    (shell-command "mullvad disconnect")
+    (shell-command (format "%s disconnect" mullvad-executable))
     (mullvad-status)))
 
 (defun mullvad-disconnect-after (duration)
@@ -141,7 +150,9 @@ Prompt the user for a SELECTION if necessary. Disconnect if already connected."
 (defun mullvad-status ()
   "Get status of connection."
   (interactive)
-  (message (string-trim (shell-command-to-string "mullvad status"))))
+  (message (string-trim
+	    (shell-command-to-string
+	     (format "%s status" mullvad-executable)))))
 
 (defun mullvad-is-disconnected-p ()
   "Return non-nil if disconnected from Mullvad server."
