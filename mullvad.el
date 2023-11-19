@@ -34,22 +34,30 @@
 
 ;;;; User options
 
-(defvar mullvad-cities-and-servers
+(defgroup mullvad ()
+  "Convenience functions for interfacing with `mullvad'."
+  :group 'emacs)
+
+(defcustom mullvad-cities-and-servers
   '(("London" . "gb-lon-wg-001")
     ("Madrid" . "es-mad-wg-101")
     ("Malmö" . "se-sto-wg-001")
     ("Frankfurt" . "de-fra-wg-001")
     ("New York" . "us-nyc-wg-601")
     ("São Paulo" . "br-sao-wg-001"))
-  "Association list of cities and optimal servers.")
+  "Association list of cities and optimal servers."
+  :type 'alist
+  :group 'mullvad)
 
-(defvar mullvad-websites-and-cities
+(defcustom mullvad-websites-and-cities
   '(("Library Genesis" . "Malmö")
     ("HathiTrust" . "New York")
     ("Criterion Channel" . "New York")
     ("Pirate Bay" . "Malmö")
     ("Wise" . "Madrid"))
-  "Association list of websites and optimal server cities.")
+  "Association list of websites and optimal server cities."
+  :type 'alist
+  :group 'mullvad)
 
 ;;;; Functions
 
