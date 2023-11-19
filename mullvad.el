@@ -180,6 +180,12 @@ when the process sentinels."
   "Return non-nil if disconnected from Mullvad server."
   (string-match-p "Disconnected" (mullvad-status)))
 
+;; TODO: develop this
+(defun mullvad-update-tab-bar ()
+  "Update the `tab-bar' with the status of the current connection."
+  
+  (setq global-mode-string (concat global-mode-string " | " (mullvad-status))))
+
 (transient-define-prefix mullvad-dispatch ()
   "Dispatch a `mullvad' command."
   [["Mullvad"
