@@ -129,6 +129,26 @@ Prompt the user for a SELECTION if necessary. Disconnect if already connected."
 	 (selection (or selection (completing-read "Select: " var))))
     (alist-get selection var nil nil #'string=)))
 
+;; TODO: develop this
+(defun mullvad-async-shell-command (command on-finish)
+  "Execute shell COMMAND asynchronously in the background.
+
+ON-FINISH is the callback function called with the result
+when the process sentinels."
+
+  ;; Start the process
+  (let ((process (start-process-shell-command "mullvad-process" nil command)))
+    
+    ;; Sentinels is Emacs' way of handling events from subprocesses
+    (set-process-sentinel process
+                          (lambda (process signal)
+
+                            ;; If the process has exited
+                            (when (memq (process-status process) '(exit signal))
+
+                              ;; Call the callback function
+                              (funcall on-finish (process-exit-status process)))))))
+
 (defun mullvad-disconnect ()
   "Disconnect from server if currently connected."
   (interactive)
