@@ -110,5 +110,18 @@ The association between websites and cities is defined in
      #'mullvad-disconnect)
     duration))
 
+(transient-define-prefix mullvad-dispatch ()
+  "Dispatch a `mullvad' command."
+  [["Mullvad"
+    ("m" "dwim"                          mullvad-dwim)
+    ("c" "connect"                       mullvad-connect)
+    ("w" "connect to website"            mullvad-connect-to-website)
+    ("y" "connect to city"               mullvad-connect-to-city)
+    ("d" "disconnect"                    mullvad-disconnect)
+    ("a" "disconnect after"              mullvad-disconnect-after)
+    ("s" "status"                        mullvad-status)
+    ]
+   ]
+  )
 (provide 'mullvad)
 ;;; mullvad.el ends here
