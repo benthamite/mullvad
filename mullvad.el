@@ -81,12 +81,16 @@
   (interactive
    (list
     (progn
-      (unless (executable-find mullvad-executable)
-	(error "Mullvad not found, please install it first"))
+      (mullvad-check-executable-exists)
       (completing-read "Select connection: " '(city website)))))
   (pcase connection
     ("city" (call-interactively #'mullvad-connect-to-city))
     ("website" (call-interactively #'mullvad-connect-to-website))))
+
+(defun mullvad-check-executable-exists ()
+  "Check that the `mullvad' executable is present in the system."
+  (unless (executable-find mullvad-executable)
+    (user-error "Mullvad not found, please install it first")))
 
 (defun mullvad-connect-to-city (&optional city)
   "Connect to server associated with CITY for a certain duration.
