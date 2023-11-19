@@ -55,9 +55,10 @@
   :group 'mullvad)
 
 (defcustom mullvad-websites-and-cities
-  '(("Library Genesis" . "Malmö")
-    ("HathiTrust" . "New York")
+  '(("Betfair" . "London")
     ("Criterion Channel" . "New York")
+    ("HathiTrust" . "New York")
+    ("Library Genesis" . "Malmö")
     ("Pirate Bay" . "Malmö")
     ("Wise" . "Madrid"))
   "Association list of websites and optimal server cities."
