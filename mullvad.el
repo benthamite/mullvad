@@ -43,26 +43,14 @@
   :type 'string
   :group 'mullvad)
 
-(defcustom mullvad-cities-and-servers
-  '(("London" . "gb-lon-wg-001")
-    ("Madrid" . "es-mad-wg-101")
-    ("Malmö" . "se-sto-wg-001")
-    ("Frankfurt" . "de-fra-wg-001")
-    ("New York" . "us-nyc-wg-601")
-    ("São Paulo" . "br-sao-wg-001"))
+(defcustom mullvad-cities-and-servers '()
   "Association list of cities and optimal servers."
-  :type 'alist
+  :type '(alist :key-type string :value-type string)
   :group 'mullvad)
 
-(defcustom mullvad-websites-and-cities
-  '(("Betfair" . "London")
-    ("Criterion Channel" . "New York")
-    ("HathiTrust" . "New York")
-    ("Library Genesis" . "Malmö")
-    ("Pirate Bay" . "Malmö")
-    ("Wise" . "Madrid"))
+(defcustom mullvad-websites-and-cities '()
   "Association list of websites and optimal server cities."
-  :type 'alist
+  :type '(alist :key-type string :value-type string)
   :group 'mullvad)
 
 ;;;; Functions
