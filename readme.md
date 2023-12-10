@@ -32,7 +32,7 @@ If you use [straight](https://github.com/radian-software/straight.el), just repl
 
 ## Configuration
 
-To use these functions, you must have `mullvad` installed and have run `mullvad account login [your account number]` in the terminal. You can find your account number by going to "settings" > "account" in the graphical interface.
+To use this package, you must have `mullvad` installed and have run `mullvad account login [your account number]` in the terminal. You can find your account number by going to "settings" > "account" in the graphical interface.
 
 To decide which server it should connect to, the package will prompt the user for a city or a website, and select the corresponding server as specified by the association lists `mullvad-cities-and-servers` and `mullvad-websites-and-cities`. You should set these user options accordingly. Here is an example, taken from my [configuration](https://github.com/benthamite/dotfiles/blob/master/emacs/config.org#mullvad):
 
