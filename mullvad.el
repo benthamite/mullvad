@@ -63,6 +63,12 @@
      (mullvad-check-executable-exists)
      (shell-command-to-string ,command)))
 
+(defun mullvad-check-executable-exists ()
+  "Check that the `mullvad' executable is present."
+  (unless (executable-find mullvad-executable)
+    (user-error "Mullvad not found. Please make sure it is installed and set `mullvad-executable' accordingly")))
+
+;;;###autoload
 (defun mullvad-status ()
   "Get status of connection."
   (interactive)
@@ -72,18 +78,12 @@
 		     (concat ". Disconnecting in " time))
 		   ".")))
 
-;;;###autoload
 (defun mullvad-dwim ()
   "Connect if disconnected, and vice versa."
   (interactive)
   (if (mullvad-is-connected-p)
       (mullvad-disconnect)
     (call-interactively #'mullvad-connect)))
-
-(defun mullvad-check-executable-exists ()
-  "Check that the `mullvad' executable is present."
-  (unless (executable-find mullvad-executable)
-    (user-error "Mullvad not found. Please make sure it is installed and set `mullvad-executable' accordingly")))
 
 ;;;;; Connect
 
