@@ -136,6 +136,7 @@ Cancel any running timers. If NO-STATUS is non-nil, do not diplay the Mullvad
 status."
   (interactive)
   (mullvad-check-executable-exists)
+  (mullvad-cancel-timers)
   (when (mullvad-is-connected-p)
     (shell-command-to-string (format "%s disconnect" mullvad-executable))
     (while (string-match-p "Disconnecting..." (mullvad-status))
