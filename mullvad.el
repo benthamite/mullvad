@@ -113,7 +113,7 @@ The association between cities and servers is defined in
 `mullvad-cities-and-servers'."
   (interactive)
   (let ((server (mullvad-connect-to-city-or-website 'city city)))
-    (shell-command (format "%s relay set hostname %s; mullvad connect"
+    (shell-command (format "%s relay set location %s; mullvad connect"
 			   mullvad-executable server))
     (call-interactively #'mullvad-disconnect-after)
     (mullvad-status)))
