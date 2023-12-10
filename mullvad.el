@@ -57,12 +57,17 @@
 
 ;;;;; General
 
+(defmacro mullvad-shell-command (command)
+  "Execute a `mullvad' shell COMMAND."
+  `(progn
+     (mullvad-check-executable-exists)
+     (shell-command-to-string ,command)))
+
 (defun mullvad-status ()
   "Get status of connection."
   (interactive)
   (message (concat (string-trim
-		    (shell-command-to-string
-		     (format "%s status" mullvad-executable)))
+		    (mullvad-shell-command (format "%s status" mullvad-executable)))
 		   (when-let ((time (mullvad-get-time-until-disconnect)))
 		     (concat ". Disconnecting in " time))
 		   ".")))
@@ -104,8 +109,8 @@ The association between cities and servers is defined in
 `mullvad-cities-and-servers'."
   (interactive)
   (let ((server (mullvad-connect-to-city-or-website 'city city)))
-    (shell-command (format "%s relay set location %s; mullvad connect"
-			   mullvad-executable server))
+    (mullvad-shell-command (format "%s relay set location %s; mullvad connect"
+				     mullvad-executable server))
     (call-interactively #'mullvad-disconnect-after)
     (mullvad-status)))
 
@@ -141,7 +146,7 @@ status."
   (mullvad-check-executable-exists)
   (mullvad-cancel-timers)
   (when (mullvad-is-connected-p)
-    (shell-command-to-string (format "%s disconnect" mullvad-executable))
+    (mullvad-shell-command (format "%s disconnect" mullvad-executable))
     (while (string-match-p "Disconnecting..." (mullvad-status))
       (sleep-for 0.1))
     (unless no-status
