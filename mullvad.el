@@ -210,14 +210,6 @@ If more than one timer found, signal an error."
   (when (mullvad-get-time-until-disconnect)
     (cancel-function-timers 'mullvad-disconnect)))
 
-;;;;; Tab-bar
-
-;; TODO: develop this
-(defun mullvad-update-tab-bar ()
-  "Update the `tab-bar' with the status of the current connection."
-
-  (setq global-mode-string (concat global-mode-string " | " (mullvad-status))))
-
 ;;;;; Dispatcher
 
 (transient-define-prefix mullvad-dispatch ()
