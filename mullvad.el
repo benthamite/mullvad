@@ -146,8 +146,10 @@ Prompt the user for a SELECTION if necessary. Disconnect if already connected."
   "Disconnect from the server if currently connected."
   (interactive)
   (mullvad-check-executable-exists)
-    (shell-command (format "%s disconnect" mullvad-executable))
   (when (mullvad-is-connected-p)
+    (shell-command-to-string (format "%s disconnect" mullvad-executable))
+      (while (string-match-p "Disconnecting..." (mullvad-status))
+	(sleep-for 0.1))
     (mullvad-status)))
 
 (defun mullvad-disconnect-after (duration)
