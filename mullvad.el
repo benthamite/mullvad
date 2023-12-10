@@ -165,24 +165,6 @@ Prompt the user for a SELECTION if necessary. Disconnect if already connected."
 
 (defun mullvad-is-connected-p ()
   "Return t iff not connected to server."
-  (string-match-p "Disconnected" (mullvad-status)))
-
-;;;;; Async
-
-;; TODO: develop this
-(defun mullvad-async-shell-command (command on-finish)
-  "Execute shell COMMAND asynchronously in the background.
-ON-FINISH is the callback function called with the result
-when the process sentinels."
-  ;; Start the process
-  (let ((process (start-process-shell-command "mullvad-process" nil command)))
-    ;; Sentinels is Emacs' way of handling events from subprocesses
-    (set-process-sentinel process
-                          (lambda (process signal)
-                            ;; If the process has exited
-                            (when (memq (process-status process) '(exit signal))
-                              ;; Call the callback function
-                              (funcall on-finish (process-exit-status process)))))))
   (null (string-match-p "Disconnected" (mullvad-status))))
 
 ;;;;; Tab-bar
@@ -190,7 +172,7 @@ when the process sentinels."
 ;; TODO: develop this
 (defun mullvad-update-tab-bar ()
   "Update the `tab-bar' with the status of the current connection."
-  
+
   (setq global-mode-string (concat global-mode-string " | " (mullvad-status))))
 
 ;;;;; Dispatcher
