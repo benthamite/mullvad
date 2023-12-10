@@ -121,7 +121,7 @@ The association between websites and cities is defined in
 (defun mullvad-connect-to-city-or-website (connection &optional selection)
   "Connect to a Mullvad server using CONNECTION type.
 Prompt the user for a SELECTION if necessary. Disconnect if already connected."
-  (mullvad-disconnect)
+  (mullvad-disconnect 'no-status)
   (let* ((var (pcase connection
 		('city mullvad-cities-and-servers)
 		('website mullvad-websites-and-cities)))
@@ -130,15 +130,18 @@ Prompt the user for a SELECTION if necessary. Disconnect if already connected."
 
 ;;;;; Disconnect
 
-(defun mullvad-disconnect ()
-  "Disconnect from the server if currently connected."
+(defun mullvad-disconnect (&optional no-status)
+  "Disconnect from the server if currently connected.
+Cancel any running timers. If NO-STATUS is non-nil, do not diplay the Mullvad
+status."
   (interactive)
   (mullvad-check-executable-exists)
   (when (mullvad-is-connected-p)
     (shell-command-to-string (format "%s disconnect" mullvad-executable))
-      (while (string-match-p "Disconnecting..." (mullvad-status))
-	(sleep-for 0.1))
-    (mullvad-status)))
+    (while (string-match-p "Disconnecting..." (mullvad-status))
+      (sleep-for 0.1))
+    (unless no-status
+      (mullvad-status))))
 
 (defun mullvad-disconnect-after (duration)
   "Disconnect from server after DURATION, in minutes."
