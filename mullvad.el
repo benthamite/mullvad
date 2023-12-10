@@ -40,7 +40,7 @@
 
 (defcustom mullvad-executable "mullvad"
   "Path to the `mullvad' executable."
-  :type 'string
+  :type 'file
   :group 'mullvad)
 
 (defcustom mullvad-cities-and-servers '()
