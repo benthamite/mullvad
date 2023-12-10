@@ -60,9 +60,12 @@
 (defun mullvad-status ()
   "Get status of connection."
   (interactive)
-  (message (string-trim
-	    (shell-command-to-string
-	     (format "%s status" mullvad-executable)))))
+  (message (concat (string-trim
+		    (shell-command-to-string
+		     (format "%s status" mullvad-executable)))
+		   (when-let ((time (mullvad-get-time-until-disconnect)))
+		     (concat ". Disconnecting in " time))
+		   ".")))
 
 ;;;###autoload
 (defun mullvad-dwim ()
