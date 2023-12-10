@@ -155,7 +155,48 @@ Prompt the user for a SELECTION if necessary. Disconnect if already connected."
 
 (defun mullvad-is-connected-p ()
   "Return t iff not connected to server."
-  (null (string-match-p "Disconnected" (mullvad-status))))
+  (let ((inhibit-message t))
+    (null (string-match-p "Disconnected" (mullvad-status)))))
+
+;;;;; Timers
+
+(defun mullvad-get-mullvad-timers ()
+  "Get the time remaining for the timer that will trigger `mullvad-disconnect'."
+  (let ((timers (cl-remove-if-not
+		 (lambda (timer)
+		   (eq (timer--function timer) 'mullvad-disconnect))
+		 timer-list)))
+    timers))
+
+(defun mullvad-get-time-until-disconnect ()
+  "Get remaining time in timer for `mullvad-disconnect'.
+If more than one timer found, signal an error."
+  (when-let ((timers (mullvad-get-mullvad-timers)))
+    (if (< (length timers) 2)
+	(let* ((timer (car timers))
+	       (time (timer--time timer)))
+	  (mullvad-format-time-string (time-subtract time (current-time))))
+      (user-error "Multiple Mullvad timers found"))))
+
+(defun mullvad-format-time-string (time)
+  "Format TIME to a string in the form `days:hours:minutes:seconds'."
+  (let* ((high (car time))
+	 (low (cadr time))
+	 (total-seconds (+ (* high (expt 2 16)) low))
+	 (days (/ total-seconds 86400))
+	 (hours (/ (% total-seconds 86400) 3600))
+	 (minutes (/ (% total-seconds 3600) 60))
+	 (seconds (% total-seconds 60)))
+    (concat
+     (if (> days 0) (format "%d days, " days) "")
+     (if (> hours 0) (format "%d hours, " hours) "")
+     (if (> minutes 0) (format "%d minutes, " minutes) "")
+     (if (> seconds 0) (format "%d seconds" seconds) ""))))
+
+(defun mullvad-cancel-timers ()
+  "Cancel any Mullvad running timers."
+  (when (mullvad-get-time-until-disconnect)
+    (cancel-function-timers 'mullvad-disconnect)))
 
 ;;;;; Tab-bar
 
