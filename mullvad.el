@@ -80,9 +80,9 @@
 (defun mullvad-dwim ()
   "Connect if disconnected, and vice versa."
   (interactive)
-  (if (mullvad-is-disconnected-p)
-      (call-interactively #'mullvad-connect)
-    (mullvad-disconnect)))
+  (if (mullvad-is-connected-p)
+      (mullvad-disconnect)
+    (call-interactively #'mullvad-connect)))
 
 (defun mullvad-check-executable-exists ()
   "Check that the `mullvad' executable is present."
@@ -146,8 +146,8 @@ Prompt the user for a SELECTION if necessary. Disconnect if already connected."
   "Disconnect from the server if currently connected."
   (interactive)
   (mullvad-check-executable-exists)
-  (unless (mullvad-is-disconnected-p)
     (shell-command (format "%s disconnect" mullvad-executable))
+  (when (mullvad-is-connected-p)
     (mullvad-status)))
 
 (defun mullvad-disconnect-after (duration)
@@ -163,7 +163,7 @@ Prompt the user for a SELECTION if necessary. Disconnect if already connected."
     (run-with-timer
      (* (string-to-number duration) 60) nil #'mullvad-disconnect)))
 
-(defun mullvad-is-disconnected-p ()
+(defun mullvad-is-connected-p ()
   "Return t iff not connected to server."
   (string-match-p "Disconnected" (mullvad-status)))
 
@@ -183,6 +183,7 @@ when the process sentinels."
                             (when (memq (process-status process) '(exit signal))
                               ;; Call the callback function
                               (funcall on-finish (process-exit-status process)))))))
+  (null (string-match-p "Disconnected" (mullvad-status))))
 
 ;;;;; Tab-bar
 
