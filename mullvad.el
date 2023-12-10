@@ -161,7 +161,7 @@ status."
      (* (string-to-number duration) 60) nil #'mullvad-disconnect)))
 
 (defun mullvad-is-connected-p ()
-  "Return t iff not connected to server."
+  "Return t iff connected to server."
   (let ((inhibit-message t))
     (null (string-match-p "Disconnected" (mullvad-status)))))
 
