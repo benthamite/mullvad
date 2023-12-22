@@ -95,22 +95,22 @@
     ("city" (call-interactively #'mullvad-connect-to-city))
     ("website" (call-interactively #'mullvad-connect-to-website))))
 
-(defun mullvad-connect-to-city (&optional city)
-  "Connect to server associated with CITY for a certain duration.
-Prompt the user to select from a list of cities and connection
-durations, and connect to the corresponding server for that
-duration.
+(defun mullvad-connect-to-city (&optional city duration)
+  "Connect to server associated with CITY for DURATION.
+If CITY or DURATION are nil, prompt the user accordingly.
 
 The association between cities and servers is defined in
 `mullvad-cities-and-servers'."
   (interactive)
   (let ((server (mullvad-connect-to-city-or-website 'city city)))
     (mullvad-shell-command (format "%s relay set location %s; mullvad connect"
-				     mullvad-executable server))
-    (call-interactively #'mullvad-disconnect-after)
+				   mullvad-executable server))
+    (if duration
+	(mullvad-disconnect-after duration)
+      (call-interactively #'mullvad-disconnect-after))
     (mullvad-status)))
 
-(defun mullvad-connect-to-website (&optional website)
+(defun mullvad-connect-to-website (&optional website duration)
   "Connect to server associated with WEBSITE for DURATION.
 Prompt the user to select from a list of websites and connection
 durations, and connect to the corresponding server for that
@@ -120,7 +120,7 @@ The association between websites and cities is defined in
 `mullvad-websites-and-cities'."
   (interactive)
   (let ((city (mullvad-connect-to-city-or-website 'website website)))
-    (mullvad-connect-to-city city)))
+    (mullvad-connect-to-city city duration)))
 
 (defun mullvad-connect-to-city-or-website (connection &optional selection)
   "Connect to a Mullvad server using CONNECTION type.
