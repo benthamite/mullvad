@@ -112,9 +112,8 @@ The association between cities and servers is defined in
 
 (defun mullvad-connect-to-website (&optional website duration)
   "Connect to server associated with WEBSITE for DURATION.
-Prompt the user to select from a list of websites and connection
-durations, and connect to the corresponding server for that
-duration.
+Prompt the user to select from a list of websites and connection durations, and
+connect to the corresponding server for that duration.
 
 The association between websites and cities is defined in
 `mullvad-websites-and-cities'."
