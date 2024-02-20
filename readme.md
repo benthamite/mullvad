@@ -59,9 +59,19 @@ You can get a list of servers by running
 mullvad relay list
 ```
 
+If you would like to be presented with a list of predefined options when prompted to select a connection duration, you can customize the user option `mullvad-durations`. For example:
+
+```emacs-lisp
+(setq mullvad-durations '(1 5 10 30 60 120))
+```
+
+Note that you can still enter a duration not in the list.
+
+To connect without a time limit, just press `RET` without entering or selecting a value.
+
 ## Usage
 
-`M-x mullvad-dispatch` provides a point of entry to the relevant commands. `mullvad-dwim` will prompt the user to connect to a city or a server, if not already connected, and will disconnect otherwise. The remaining commands are self-explanatory.
+`M-x mullvad-dispatch` provides a point of entry to the relevant commands. `mullvad-dwim` will prompt the user to connect to a city or a website, if not already connected, and will disconnect otherwise. The remaining commands are self-explanatory.
 
 ## Troubleshooting
 
