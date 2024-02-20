@@ -147,7 +147,6 @@ Prompt the user for a SELECTION if necessary. Disconnect if already connected."
 Cancel any running timers. If NO-STATUS is non-nil, do not diplay the Mullvad
 status."
   (interactive)
-  (mullvad-check-executable-exists)
   (mullvad-cancel-timers)
   (when (mullvad-is-connected-p)
     (mullvad-shell-command (format "%s disconnect" mullvad-executable))
