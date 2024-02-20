@@ -2,7 +2,7 @@
 
 ;; Author: Pablo Stafforini
 ;; Maintainer: Pablo Stafforini
-;; Version: 0.1
+;; Version: 0.2
 
 ;; This file is not part of GNU Emacs
 
