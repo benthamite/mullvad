@@ -110,8 +110,8 @@ If CITY or DURATION are nil, prompt the user accordingly.
 The association between cities and servers is defined in
 `mullvad-cities-and-servers'."
   (interactive)
-  (let ((server (mullvad-connect-to-city-or-website 'city city)))
     (mullvad-shell-command (format "%s relay set location %s; mullvad connect"
+  (let ((server (mullvad-get-server 'city city)))
 				   mullvad-executable server))
     (if duration
 	(mullvad-disconnect-after duration)
@@ -126,10 +126,9 @@ connect to the corresponding server for that duration.
 The association between websites and cities is defined in
 `mullvad-websites-and-cities'."
   (interactive)
-  (let ((city (mullvad-connect-to-city-or-website 'website website)))
+  (let ((city (mullvad-get-server 'website website)))
     (mullvad-connect-to-city city duration)))
 
-(defun mullvad-connect-to-city-or-website (connection &optional selection)
   "Connect to a Mullvad server using CONNECTION type.
 Prompt the user for a SELECTION if necessary. Disconnect if already connected."
   (mullvad-disconnect 'no-status)
@@ -138,6 +137,7 @@ Prompt the user for a SELECTION if necessary. Disconnect if already connected."
 		('website mullvad-websites-and-cities)))
 	 (selection (or selection (completing-read "Select: " var))))
     (alist-get selection var nil nil #'string=)))
+(defun mullvad-get-server (connection &optional selection)
 
 ;;;;; Disconnect
 
