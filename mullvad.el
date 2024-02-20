@@ -144,7 +144,7 @@ a website. If SELECTION is nil, prompt the user for one"
 
 (defun mullvad-disconnect (&optional silently)
   "Disconnect from the server if currently connected.
-Cancel any running timers. If SILENTLY is non-nil, do not diplay the Mullvad
+Cancel any running timers. If SILENTLY is non-nil, do not display the Mullvad
 status."
   (interactive)
   (mullvad-cancel-timers)
