@@ -143,16 +143,15 @@ a website. If SELECTION is nil, prompt the user for one"
 
 (defun mullvad-disconnect (&optional silently)
   "Disconnect from the server if currently connected.
-Cancel any running timers. If NO-STATUS is non-nil, do not diplay the Mullvad
+Cancel any running timers. If SILENTLY is non-nil, do not diplay the Mullvad
 status."
   (interactive)
   (mullvad-cancel-timers)
   (when (mullvad-is-connected-p)
     (mullvad-shell-command (format "%s disconnect" mullvad-executable))
     (while (string-match-p "Disconnecting..." (mullvad-status))
-      (sleep-for 0.1))
-    (unless no-status
-      (mullvad-status))))
+      (sleep-for 0.1)))
+  (unless silently (mullvad-status)))
 
 (defun mullvad-disconnect-after (duration)
   "Disconnect from server after DURATION, in minutes."
