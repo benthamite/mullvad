@@ -49,6 +49,15 @@
   :type '(alist :key-type string :value-type string)
   :group 'mullvad)
 
+(defcustom mullvad-durations
+  '("1" "5" "10" "30" "60" "120")
+  "List of connection durations, in minutes.
+The user will be presented with this list when prompted to select a duration. In
+addition to these durations, the user can also select \"∞\" for an indefinite
+connection, or \"custom\" to enter a custom duration."
+  :type '(repeat string)
+  :group 'mullvad)
+
 ;;;; Functions
 
 ;;;;; General
@@ -152,7 +161,7 @@ status."
   (interactive
    (list (completing-read
 	  "Select duration (minutes): "
-	  '("1" "5" "10" "30" "60" "120" "∞" "custom"))))
+	  (append mullvad-durations '("∞" "custom")))))
   (when (string= duration "custom")
     (setq duration (read-string "Select duration (minutes): ")))
   (cancel-function-timers #'mullvad-disconnect)
