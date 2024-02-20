@@ -77,11 +77,10 @@ connection, or \"custom\" to enter a custom duration."
 (defun mullvad-status ()
   "Get the current `mullvad' status."
   (interactive)
-  (message (concat (string-trim
-		    (mullvad-shell-command (format "%s status" mullvad-executable)))
-		   (when-let ((time (mullvad-get-time-until-disconnect)))
-		     (concat ". Disconnecting in " time))
-		   ".")))
+  (let ((status (string-trim
+		 (mullvad-shell-command (format "%s status" mullvad-executable))))
+	(time (mullvad-get-time-until-disconnect)))
+    (message (concat status (when time (format ". Disconnecting in %s." time))))))
 
 (defun mullvad-dwim ()
   "Connect if disconnected, and vice versa."
