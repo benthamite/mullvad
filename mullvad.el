@@ -157,16 +157,31 @@ status."
 
 (defun mullvad-disconnect-after (duration)
   "Disconnect from server after DURATION, in minutes."
-  (interactive
-   (list (completing-read
-	  "Select duration (minutes): "
-	  (append mullvad-durations '("∞" "custom")))))
-  (when (string= duration "custom")
-    (setq duration (read-string "Select duration (minutes): ")))
+  (interactive (list (mullvad-prompt-for-duration)))
+  (while (null (mullvad-validate-input duration))
+    (setq duration (mullvad-prompt-for-duration 'warn)))
   (cancel-function-timers #'mullvad-disconnect)
-  (unless (equal duration "∞")
+  (unless (string-empty-p duration)
     (run-with-timer
      (* (string-to-number duration) 60) nil #'mullvad-disconnect)))
+
+(defun mullvad-prompt-for-duration (&optional warn)
+  "Prompt the user to select or enter a duration.
+If WARN is non-nil, warn the user that the input is invalid."
+  (let ((prompt
+	 (if warn
+	     "Invalid input. Please enter a positive integer or leave blank: "
+	   "Disconnect after how many minutes (leave blank to remain connected indefinitely)? ")))
+    (if mullvad-durations
+	(completing-read prompt (mapcar #'number-to-string mullvad-durations))
+      (read-string prompt))))
+
+(defun mullvad-validate-input (str)
+  "Return non-nil if STR is a positive integer or an empty string."
+  (when
+      (or (string-empty-p str)
+	  (< 0 (string-to-number str)))
+    str))
 
 (defun mullvad-is-connected-p ()
   "Return t iff connected to server."
