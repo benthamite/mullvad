@@ -129,15 +129,15 @@ The association between websites and cities is defined in
   (let ((city (mullvad-get-server 'website website)))
     (mullvad-connect-to-city city duration)))
 
-  (let* ((var (pcase connection
-		('city mullvad-cities-and-servers)
-		('website mullvad-websites-and-cities)))
-	 (selection (or selection (completing-read "Select: " var))))
-    (alist-get selection var nil nil #'string=)))
 (defun mullvad-get-server (connection &optional selection)
   "Return the Mullvad server associated with CONNECTION and SELECTION.
 CONNECTION can be either `city' or `website'. SELECTION can be either a city or
 a website. If SELECTION is nil, prompt the user for one"
+  (let* ((alist (pcase connection
+		  ('city mullvad-cities-and-servers)
+		  ('website mullvad-websites-and-cities)))
+	 (selection (or selection (completing-read "Select: " alist))))
+    (alist-get selection alist nil nil #'string=)))
 
 ;;;;; Disconnect
 
