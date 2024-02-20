@@ -75,7 +75,7 @@ connection, or \"custom\" to enter a custom duration."
 
 ;;;###autoload
 (defun mullvad-status ()
-  "Get status of connection."
+  "Get the current `mullvad' status."
   (interactive)
   (message (concat (string-trim
 		    (mullvad-shell-command (format "%s status" mullvad-executable)))
