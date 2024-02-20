@@ -63,7 +63,7 @@ connection, or \"custom\" to enter a custom duration."
 ;;;;; General
 
 (defmacro mullvad-shell-command (command)
-  "Execute a `mullvad' shell COMMAND."
+  "Execute a `mullvad' shell COMMAND and return its output as a string."
   `(progn
      (mullvad-check-executable-exists)
      (shell-command-to-string ,command)))
