@@ -129,7 +129,6 @@ The association between websites and cities is defined in
   (let ((city (mullvad-get-server 'website website)))
     (mullvad-connect-to-city city duration)))
 
-  (mullvad-disconnect 'no-status)
   (let* ((var (pcase connection
 		('city mullvad-cities-and-servers)
 		('website mullvad-websites-and-cities)))
@@ -142,7 +141,7 @@ a website. If SELECTION is nil, prompt the user for one"
 
 ;;;;; Disconnect
 
-(defun mullvad-disconnect (&optional no-status)
+(defun mullvad-disconnect (&optional silently)
   "Disconnect from the server if currently connected.
 Cancel any running timers. If NO-STATUS is non-nil, do not diplay the Mullvad
 status."
