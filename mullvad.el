@@ -49,8 +49,7 @@
   :type '(alist :key-type string :value-type string)
   :group 'mullvad)
 
-(defcustom mullvad-durations
-  '(1 5 10 30 60 120)
+(defcustom mullvad-durations nil
   "List of connection durations, in minutes.
 Integers in this list will be presented as selection candidates when prompted to
 enter the connection duration. A custom duration may also be entered. If nil,
