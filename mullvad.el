@@ -219,18 +219,13 @@ If more than one timer found, signal an error."
   "Dispatch a `mullvad' command."
   [["connect"
     ("c" "to city"            mullvad-connect-to-city)
-    ("w" "to website"         mullvad-connect-to-website)
-    ]
+    ("w" "to website"         mullvad-connect-to-website)]
    ["disconnect"
     ("n" "now"                mullvad-disconnect)
-    ("l" "later"              mullvad-disconnect-after)
-    ]
+    ("l" "later"              mullvad-disconnect-after)]
    [""
     ("d" "dwim"               mullvad-dwim)
-    ("s" "status"             mullvad-status)
-    ]
-   ]
-  )
+    ("s" "status"             mullvad-status)]])
 
 (provide 'mullvad)
 ;;; mullvad.el ends here
