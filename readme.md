@@ -37,7 +37,7 @@ To use this package, you must have `mullvad` installed and have run `mullvad acc
 To decide which server it should connect to, the package will prompt the user for a city or a website, and select the corresponding server as specified by the association lists `mullvad-cities-and-servers` and `mullvad-websites-and-cities`. You should set these user options accordingly. Here is an example, taken from my [configuration](https://github.com/benthamite/dotfiles/blob/master/emacs/config.org#mullvad):
 
 ``` emacs-lisp
-  (setq mullvad-cities-and-servers
+(setq mullvad-cities-and-servers
 	'(("London" . "gb-lon-wg-001")
 	  ("Madrid" . "es-mad-wg-101")
 	  ("Malmö" . "se-sto-wg-001")
@@ -45,7 +45,7 @@ To decide which server it should connect to, the package will prompt the user fo
 	  ("New York" . "us-nyc-wg-601")
 	  ("São Paulo" . "br-sao-wg-001")))
 
-  (setq mullvad-websites-and-cities
+(setq mullvad-websites-and-cities
 	'(("Criterion Channel" . "New York")
 	  ("HathiTrust" . "New York")
 	  ("Library Genesis" . "Malmö")
