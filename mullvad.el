@@ -57,7 +57,6 @@ enter the connection duration. A custom duration may also be entered. If nil,
 always enter a duration manually."
   :type '(repeat integer)
   :group 'mullvad)
-  :group 'mullvad)
 
 ;;;; Functions
 
