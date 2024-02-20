@@ -72,7 +72,6 @@ always enter a duration manually."
   (unless (executable-find mullvad-executable)
     (user-error "Mullvad not found. Please make sure it is installed and set `mullvad-executable' accordingly")))
 
-;;;###autoload
 (defun mullvad-status ()
   "Get the current `mullvad' status."
   (interactive)
@@ -90,7 +89,6 @@ always enter a duration manually."
 
 ;;;;; Connect
 
-;;;###autoload
 (defun mullvad-connect (connection)
   "Connect to a Mullvad server, prompting the user for a CONNECTION type."
   (interactive
@@ -228,8 +226,9 @@ If more than one timer found, signal an error."
 
 ;;;;; Dispatcher
 
-(transient-define-prefix mullvad-dispatch ()
-  "Dispatch a `mullvad' command."
+;;;###autoload (autoload 'mullvad-dispatch "mullvad" nil t)
+(transient-define-prefix mullvad ()
+  "`mullvad' menu."
   [["connect"
     ("c" "to city"            mullvad-connect-to-city)
     ("w" "to website"         mullvad-connect-to-website)]
@@ -239,6 +238,8 @@ If more than one timer found, signal an error."
    [""
     ("d" "dwim"               mullvad-dwim)
     ("s" "status"             mullvad-status)]])
+
+(make-obsolete 'mullvad-dispatch 'mullvad "0.2")
 
 (provide 'mullvad)
 ;;; mullvad.el ends here

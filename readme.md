@@ -71,7 +71,7 @@ To connect without a time limit, just press `RET` without entering or selecting 
 
 ## Usage
 
-`M-x mullvad-dispatch` provides a point of entry to the relevant commands. `mullvad-dwim` will prompt the user to connect to a city or a website, if not already connected, and will disconnect otherwise. The remaining commands are self-explanatory.
+`M-x mullvad` provides a point of entry to the relevant commands. `mullvad-dwim` will prompt the user to connect to a city or a website, if not already connected, and will disconnect otherwise. The remaining commands are self-explanatory.
 
 ## Troubleshooting
 
