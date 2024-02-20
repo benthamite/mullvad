@@ -50,12 +50,13 @@
   :group 'mullvad)
 
 (defcustom mullvad-durations
-  '("1" "5" "10" "30" "60" "120")
+  '(1 5 10 30 60 120)
   "List of connection durations, in minutes.
-The user will be presented with this list when prompted to select a duration. In
-addition to these durations, the user can also select \"∞\" for an indefinite
-connection, or \"custom\" to enter a custom duration."
-  :type '(repeat string)
+Integers in this list will be presented as selection candidates when prompted to
+enter the connection duration. A custom duration may also be entered. If nil,
+always enter a duration manually."
+  :type '(repeat integer)
+  :group 'mullvad)
   :group 'mullvad)
 
 ;;;; Functions
