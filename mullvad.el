@@ -107,9 +107,10 @@ If CITY or DURATION are nil, prompt the user accordingly.
 The association between cities and servers is defined in
 `mullvad-cities-and-servers'."
   (interactive)
-  (let ((server (mullvad-get-server 'city city)))
-    (mullvad-shell-command (format "%1$s relay set location %s; %1$s connect"
-				   mullvad-executable server))
+  (let* ((server (mullvad-get-server 'city city))
+	 (command (format "%1$s relay set location %s; %1$s connect"
+			  mullvad-executable server)))
+    (mullvad-shell-command command)
     (if duration
 	(mullvad-disconnect-after duration)
       (call-interactively #'mullvad-disconnect-after))
