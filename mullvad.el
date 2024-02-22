@@ -100,9 +100,11 @@ always enter a duration manually."
     ("city" (call-interactively #'mullvad-connect-to-city))
     ("website" (call-interactively #'mullvad-connect-to-website))))
 
-(defun mullvad-connect-to-city (&optional city duration)
+(defun mullvad-connect-to-city (&optional city duration silently)
   "Connect to server associated with CITY for DURATION.
 If CITY or DURATION are nil, prompt the user accordingly.
+
+If SILENTLY is non-nil, do not display the Mullvad status.
 
 The association between cities and servers is defined in
 `mullvad-cities-and-servers'."
@@ -112,20 +114,22 @@ The association between cities and servers is defined in
 			  mullvad-executable server)))
     (mullvad-shell-command command)
     (if duration
-	(mullvad-disconnect-after duration)
-      (call-interactively #'mullvad-disconnect-after))
-    (mullvad-status)))
+	(mullvad-disconnect-after duration silently)
+      (call-interactively (lambda () (mullvad-disconnect-after nil silently))))
+    (unless silently (mullvad-status))))
 
-(defun mullvad-connect-to-website (&optional website duration)
+(defun mullvad-connect-to-website (&optional website duration silently)
   "Connect to server associated with WEBSITE for DURATION.
 Prompt the user to select from a list of websites and connection durations, and
 connect to the corresponding server for that duration.
+
+If SILENTLY is non-nil, do not display the Mullvad status.
 
 The association between websites and cities is defined in
 `mullvad-websites-and-cities'."
   (interactive)
   (let ((city (mullvad-get-server 'website website)))
-    (mullvad-connect-to-city city duration)))
+    (mullvad-connect-to-city city duration silently)))
 
 (defun mullvad-get-server (connection &optional selection)
   "Return the Mullvad server associated with CONNECTION and SELECTION.
@@ -152,15 +156,18 @@ status."
       (sleep-for 0.1)))
   (unless silently (mullvad-status)))
 
-(defun mullvad-disconnect-after (duration)
-  "Disconnect from server after DURATION, in minutes."
+(defun mullvad-disconnect-after (duration &optional silently)
+  "Disconnect from server after DURATION, in minutes.
+If SILENTLY is non-nil, do not display the Mullvad status."
   (interactive (list (mullvad-prompt-for-duration)))
   (while (null (mullvad-validate-input duration))
     (setq duration (mullvad-prompt-for-duration 'warn)))
   (cancel-function-timers #'mullvad-disconnect)
   (unless (string-empty-p duration)
     (run-with-timer
-     (* (string-to-number duration) 60) nil #'mullvad-disconnect)))
+     (* (string-to-number duration) 60) nil
+     (lambda ()
+       (mullvad-disconnect silently)))))
 
 (defun mullvad-prompt-for-duration (&optional warn)
   "Prompt the user to select or enter a duration.
