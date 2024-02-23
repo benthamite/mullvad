@@ -79,6 +79,18 @@ By default, `mullvad` emits a message every time it connects to a server or disc
 
 `mullvad-dwim` will prompt the user to connect to a city or a website, if not already connected, and will disconnect otherwise. The remaining commands are self-explanatory.
 
+`mullvad` may also be used programmatically to connect to special servers before making requests for services restricted to particular locations. As an example, consider how I [use it](https://github.com/benthamite/dotfiles/blob/master/emacs/extras/gptel-extras.el) with the package [gptel](https://github.com/karthink/gptel) to circumvent [Gemini](https://gemini.google.com/)’s location restrictions:
+
+```emacs-lisp
+(defun gptel-extras-set-mullvad (orig-fun &rest args)
+  "Enable `mullvad' when connecting to Gemini, then call ORIG-FUN with ARGS."
+  (when (string= gptel-model "gemini-pro")
+    (mullvad-connect-to-website "Gemini" 5 'silently)
+    (apply orig-fun args)))
+
+(advice-add 'gptel-curl-get-response :around #'gptel-extras-set-mullvad)
+```
+
 ## Troubleshooting
 
 The package has not been extensively tested. If you encounter any problems, feel free to open an issue.
