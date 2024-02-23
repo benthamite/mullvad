@@ -235,7 +235,7 @@ If more than one timer found, signal an error."
     (cancel-timer mullvad-timer)
     (setq mullvad-timer nil)))
 
-;;;;; Dispatcher
+;;;;; Menu
 
 ;; TODO: add silently option
 ;;;###autoload (autoload 'mullvad-dispatch "mullvad" nil t)
