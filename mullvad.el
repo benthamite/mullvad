@@ -62,6 +62,11 @@ always enter a duration manually."
   :type 'boolean
   :group 'mullvad)
 
+;;;; Variables
+
+(defvar mullvad-timer nil
+  "The running `mullvad' timer object, if any.")
+
 ;;;; Functions
 
 ;;;;; General
@@ -143,6 +148,11 @@ a website. If SELECTION is nil, prompt the user for one"
 	 (selection (or selection (completing-read "Select: " alist))))
     (alist-get selection alist nil nil #'string=)))
 
+(defun mullvad-is-connected-p ()
+  "Return t iff connected to server."
+  (let ((inhibit-message t))
+    (null (string-match-p "Disconnected" (mullvad-status)))))
+
 ;;;;; Disconnect
 
 (defun mullvad-disconnect (&optional silently)
@@ -158,61 +168,51 @@ status."
       (sleep-for 0.1)))
   (unless (or mullvad-silent silently) (mullvad-status)))
 
-(defun mullvad-disconnect-after (duration &optional silently)
+(defun mullvad-disconnect-after (&optional duration silently)
   "Disconnect from server after DURATION, in minutes.
-If SILENTLY is non-nil, do not display the Mullvad status."
-  (interactive (list (mullvad-prompt-for-duration)))
-  (while (null (mullvad-validate-input duration))
-    (setq duration (mullvad-prompt-for-duration 'warn)))
-  (cancel-function-timers #'mullvad-disconnect)
-  (unless (string-empty-p duration)
-    (run-with-timer
-     (* (string-to-number duration) 60) nil
-     (lambda ()
-       (mullvad-disconnect silently)))))
+If DURATION is nil, prompt the user for one, If SILENTLY is non-nil, do not
+display the Mullvad status."
+  (interactive)
+  (unless (mullvad-is-connected-p)
+    (user-error "Not currently connected"))
+  (let ((duration (or duration (mullvad-prompt-for-duration))))
+    (mullvad-cancel-timers)
+    (when duration
+      (setq mullvad-timer
+	    (run-with-timer
+	     (* duration 60) nil
+	     (lambda ()
+	       (mullvad-disconnect))))))
+  (unless (or mullvad-silent silently) (mullvad-status)))
 
 (defun mullvad-prompt-for-duration (&optional warn)
   "Prompt the user to select or enter a duration.
 If WARN is non-nil, warn the user that the input is invalid."
-  (let ((prompt
-	 (if warn
-	     "Invalid input. Please enter a positive integer or leave blank: "
-	   "Disconnect after how many minutes (leave blank to remain connected indefinitely)? ")))
-    (if mullvad-durations
-	(completing-read prompt (mapcar #'number-to-string mullvad-durations))
-      (read-string prompt))))
+  (let* ((prompt
+	  (if warn
+	      "Invalid input. Please enter a positive integer or leave blank: "
+	    "Disconnect after how many minutes (leave blank to remain connected indefinitely)? "))
+	 (duration (if mullvad-durations
+		       (completing-read prompt (mapcar #'number-to-string mullvad-durations))
+		     (read-string prompt))))
+    (while (mullvad-invalid-duration-p duration)
+      (mullvad-prompt-for-duration 'warn))
+    (unless (string-empty-p duration)
+      (string-to-number duration))))
 
-(defun mullvad-validate-input (str)
-  "Return non-nil if STR is a positive integer or an empty string."
-  (when
-      (or (string-empty-p str)
-	  (< 0 (string-to-number str)))
-    str))
-
-(defun mullvad-is-connected-p ()
-  "Return t iff connected to server."
-  (let ((inhibit-message t))
-    (null (string-match-p "Disconnected" (mullvad-status)))))
+(defun mullvad-invalid-duration-p (str)
+  "Return t iff STR is not a positive integer or an empty string."
+  (not (or (string-empty-p str)
+	   (< 0 (string-to-number str)))))
 
 ;;;;; Timers
-
-(defun mullvad-get-mullvad-timers ()
-  "Get the time remaining for the timer that will trigger `mullvad-disconnect'."
-  (let ((timers (cl-remove-if-not
-		 (lambda (timer)
-		   (eq (timer--function timer) 'mullvad-disconnect))
-		 timer-list)))
-    timers))
 
 (defun mullvad-get-time-until-disconnect ()
   "Get remaining time in timer for `mullvad-disconnect'.
 If more than one timer found, signal an error."
-  (when-let ((timers (mullvad-get-mullvad-timers)))
-    (if (< (length timers) 2)
-	(let* ((timer (car timers))
-	       (time (timer--time timer)))
-	  (mullvad-format-time-string (time-subtract time (current-time))))
-      (user-error "Multiple Mullvad timers found"))))
+  (when mullvad-timer
+    (let ((time (timer--time mullvad-timer)))
+      (mullvad-format-time-string (time-subtract time (current-time))))))
 
 (defun mullvad-format-time-string (time)
   "Format TIME to a string in the form `days:hours:minutes:seconds'."
@@ -230,9 +230,10 @@ If more than one timer found, signal an error."
      (if (> seconds 0) (format "%d seconds" seconds) ""))))
 
 (defun mullvad-cancel-timers ()
-  "Cancel any Mullvad running timers."
-  (when (mullvad-get-time-until-disconnect)
-    (cancel-function-timers 'mullvad-disconnect)))
+  "Cancel any running Mullvad timers."
+  (when mullvad-timer
+    (cancel-timer mullvad-timer)
+    (setq mullvad-timer nil)))
 
 ;;;;; Dispatcher
 
