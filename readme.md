@@ -69,6 +69,8 @@ Note that you can still enter a duration not in the list.
 
 To connect without a time limit, just press `RET` without entering or selecting a value.
 
+By default, `mullvad` emits a message every time it connects to a server or disconnects from one. If you would like to inhibit these messages, you san set `mullvad-silent` to `t`.
+
 ## Usage
 
 `M-x mullvad` provides a point of entry to the relevant commands:

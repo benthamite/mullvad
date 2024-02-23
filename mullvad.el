@@ -57,6 +57,11 @@ always enter a duration manually."
   :type '(repeat integer)
   :group 'mullvad)
 
+(defcustom mullvad-silent nil
+  "Whether to inhibit `mullvad' messages after connecting or disconnecting."
+  :type 'boolean
+  :group 'mullvad)
+
 ;;;; Functions
 
 ;;;;; General
@@ -113,10 +118,7 @@ The association between cities and servers is defined in
 	 (command (format "%1$s relay set location %s; %1$s connect"
 			  mullvad-executable server)))
     (mullvad-shell-command command)
-    (if duration
-	(mullvad-disconnect-after duration silently)
-      (call-interactively (lambda () (mullvad-disconnect-after nil silently))))
-    (unless silently (mullvad-status))))
+    (mullvad-disconnect-after duration silently)))
 
 (defun mullvad-connect-to-website (&optional website duration silently)
   "Connect to server associated with WEBSITE for DURATION.
@@ -154,7 +156,7 @@ status."
     ;; TODO: do this asynchronously
     (while (string-match-p "Disconnecting..." (mullvad-status))
       (sleep-for 0.1)))
-  (unless silently (mullvad-status)))
+  (unless (or mullvad-silent silently) (mullvad-status)))
 
 (defun mullvad-disconnect-after (duration &optional silently)
   "Disconnect from server after DURATION, in minutes.
@@ -234,6 +236,7 @@ If more than one timer found, signal an error."
 
 ;;;;; Dispatcher
 
+;; TODO: add silently option
 ;;;###autoload (autoload 'mullvad-dispatch "mullvad" nil t)
 (transient-define-prefix mullvad ()
   "`mullvad' menu."
