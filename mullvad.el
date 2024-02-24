@@ -71,11 +71,17 @@ always enter a duration manually."
 
 ;;;;; General
 
-(defmacro mullvad-shell-command (command)
+(defun mullvad-dwim ()
+  "Connect if disconnected, and vice versa."
+  (interactive)
+  (if (mullvad-is-connected-p)
+      (mullvad-disconnect)
+    (call-interactively #'mullvad-connect)))
+
+(defun mullvad-shell-command (command)
   "Execute a `mullvad' shell COMMAND and return its output as a string."
-  `(progn
-     (mullvad-check-executable-exists)
-     (shell-command-to-string ,command)))
+  (mullvad-check-executable-exists)
+  (shell-command-to-string command))
 
 (defun mullvad-check-executable-exists ()
   "Check that the `mullvad' executable is present."
@@ -89,13 +95,6 @@ always enter a duration manually."
 		 (mullvad-shell-command (format "%s status" mullvad-executable))))
 	(time (mullvad-get-time-until-disconnect)))
     (message (concat status (when time (format ". Disconnecting in %s." time))))))
-
-(defun mullvad-dwim ()
-  "Connect if disconnected, and vice versa."
-  (interactive)
-  (if (mullvad-is-connected-p)
-      (mullvad-disconnect)
-    (call-interactively #'mullvad-connect)))
 
 ;;;;; Connect
 
