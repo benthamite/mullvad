@@ -163,9 +163,8 @@ status."
   (mullvad-cancel-timers)
   (when (mullvad-is-connected-p)
     (mullvad-shell-command (format "%s disconnect" mullvad-executable))
-    ;; TODO: do this asynchronously
     (while (string-match-p "Disconnecting..." (mullvad-status))
-      (sleep-for 0.1)))
+      (sleep-for 0.01)))
   (unless (or mullvad-silent silently) (mullvad-status)))
 
 (defun mullvad-disconnect-after (&optional duration silently)
