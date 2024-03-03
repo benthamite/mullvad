@@ -127,6 +127,8 @@ The association between cities and servers is defined in
 	 (command (format "%1$s relay set location %s; %1$s connect"
 			  mullvad-executable server)))
     (mullvad-shell-command command 'silently)
+    (while (not (mullvad-is-connected-p))
+      (sleep-for 0.01))
     (mullvad-disconnect-after duration silently)))
 
 (defun mullvad-connect-to-website (&optional website duration silently)
