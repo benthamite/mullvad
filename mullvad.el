@@ -82,7 +82,7 @@ always enter a duration manually."
   "Execute a `mullvad' shell COMMAND and return its output as a string.
 If SILENTLY is non-nil, do not return the output."
   (mullvad-check-executable-exists)
-  (if silently
+  (if (or mullvad-silent silently)
       (mullvad-shh
        (shell-command command))
     (shell-command-to-string command)))
@@ -131,10 +131,10 @@ The association between cities and servers is defined in
   (let* ((server (mullvad-get-server 'city city))
 	 (command (format "%1$s relay set location %s; %1$s connect"
 			  mullvad-executable server)))
-    (mullvad-shell-command command 'silently)
+    (mullvad-shell-command command (or mullvad-silent silently))
     (while (not (mullvad-is-connected-p))
       (sleep-for 0.01))
-    (mullvad-disconnect-after duration silently)))
+    (mullvad-disconnect-after duration (or mullvad-silent silently))))
 
 (defun mullvad-connect-to-website (&optional website duration silently)
   "Connect to server associated with WEBSITE for DURATION.
@@ -147,7 +147,7 @@ The association between websites and cities is defined in
 `mullvad-websites-and-cities'."
   (interactive)
   (let ((city (mullvad-get-server 'website website)))
-    (mullvad-connect-to-city city duration silently)))
+    (mullvad-connect-to-city city duration (or mullvad-silent silently))))
 
 (defun mullvad-get-server (connection &optional selection)
   "Return the Mullvad server associated with CONNECTION and SELECTION.
@@ -193,7 +193,7 @@ display the Mullvad status."
 	    (run-with-timer
 	     (* duration 60) nil
 	     (lambda ()
-	       (mullvad-disconnect silently))))))
+	       (mullvad-disconnect (or mullvad-silent silently)))))))
   (unless (or mullvad-silent silently) (mullvad-status)))
 
 (defun mullvad-prompt-for-duration (&optional warn)
