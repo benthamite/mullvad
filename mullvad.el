@@ -84,7 +84,7 @@ If SILENTLY is non-nil, do not return the output."
   (mullvad-check-executable-exists)
   (if (or mullvad-silent silently)
       (mullvad-shh
-       (shell-command command))
+       (shell-command-to-string command))
     (shell-command-to-string command)))
 
 (defun mullvad-check-executable-exists ()
