@@ -133,7 +133,7 @@ The association between cities and servers is defined in
 			  mullvad-executable server)))
     (mullvad-shell-command command (or mullvad-silent silently))
     (while (not (mullvad-is-connected-p))
-      (sleep-for 0.01))
+      (sleep-for 0.1))
     (mullvad-disconnect-after duration (or mullvad-silent silently))))
 
 (defun mullvad-connect-to-website (&optional website duration silently)
