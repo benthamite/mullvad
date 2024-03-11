@@ -193,7 +193,7 @@ display the Mullvad status."
 	    (run-with-timer
 	     (* duration 60) nil
 	     (lambda ()
-	       (mullvad-disconnect))))))
+	       (mullvad-disconnect silently))))))
   (unless (or mullvad-silent silently) (mullvad-status)))
 
 (defun mullvad-prompt-for-duration (&optional warn)
