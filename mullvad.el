@@ -83,9 +83,8 @@ always enter a duration manually."
 If SILENTLY is non-nil, do not return the output."
   (mullvad-check-executable-exists)
   (if silently
-      (let ((inhibit-message t)
-	    (message-log-max nil))
-	(shell-command command))
+      (mullvad-shh
+       (shell-command command))
     (shell-command-to-string command)))
 
 (defun mullvad-check-executable-exists ()
@@ -100,6 +99,12 @@ If SILENTLY is non-nil, do not return the output."
 		 (mullvad-shell-command (format "%s status" mullvad-executable))))
 	(time (mullvad-get-time-until-disconnect)))
     (message (concat status (when time (format ". Disconnecting in %s." time))))))
+
+(defmacro mullvad-shh (&rest body)
+  "Suppress messages in the execution of BODY."
+  `(let ((inhibit-message t)
+	 (message-log-max nil))
+     ,@body))
 
 ;;;;; Connect
 
@@ -156,9 +161,8 @@ a website. If SELECTION is nil, prompt the user for one"
 
 (defun mullvad-is-connected-p ()
   "Return t iff connected to server."
-  (let ((inhibit-message t)
-	(message-log-max nil))
-    (null (string-match-p "Disconnected" (mullvad-status)))))
+  (mullvad-shh
+   (null (string-match-p "Disconnected" (mullvad-status)))))
 
 ;;;;; Disconnect
 
@@ -170,10 +174,9 @@ status."
   (mullvad-cancel-timers)
   (when (mullvad-is-connected-p)
     (mullvad-shell-command (format "%s disconnect" mullvad-executable))
-    (let ((inhibit-message t)
-	  (message-log-max nil))
-      (while (string-match-p "Disconnecting..." (mullvad-status)))
-      (sleep-for 0.01)))
+    (mullvad-shh
+     (while (string-match-p "Disconnecting..." (mullvad-status)))
+     (sleep-for 0.01)))
   (unless (or mullvad-silent silently) (mullvad-status)))
 
 (defun mullvad-disconnect-after (&optional duration silently)
