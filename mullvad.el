@@ -78,6 +78,12 @@ always enter a duration manually."
       (mullvad-disconnect)
     (call-interactively #'mullvad-connect)))
 
+(defmacro mullvad-shh (&rest body)
+  "Suppress messages in the execution of BODY."
+  `(let ((inhibit-message t)
+	 (message-log-max nil))
+     ,@body))
+
 (defun mullvad-shell-command (command &optional silently)
   "Execute a `mullvad' shell COMMAND and return its output as a string.
 If SILENTLY is non-nil, do not return the output."
@@ -99,12 +105,6 @@ If SILENTLY is non-nil, do not return the output."
 		 (mullvad-shell-command (format "%s status" mullvad-executable))))
 	(time (mullvad-get-time-until-disconnect)))
     (message (concat status (when time (format ". Disconnecting in %s." time))))))
-
-(defmacro mullvad-shh (&rest body)
-  "Suppress messages in the execution of BODY."
-  `(let ((inhibit-message t)
-	 (message-log-max nil))
-     ,@body))
 
 ;;;;; Connect
 
