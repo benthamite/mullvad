@@ -88,10 +88,13 @@ always enter a duration manually."
   "Execute a `mullvad' shell COMMAND and return its output as a string.
 If SILENTLY is non-nil, do not return the output."
   (mullvad-check-executable-exists)
-  (if (or mullvad-silent silently)
-      (mullvad-shh
-       (shell-command-to-string command))
-    (shell-command-to-string command)))
+  (let ((fun (lambda (command)
+	       (shell-command-to-string
+		(format "%s %s" mullvad-executable command)))))
+    (if (or mullvad-silent silently)
+	(mullvad-shh
+	 (funcall fun command))
+      (funcall fun command))))
 
 (defun mullvad-check-executable-exists ()
   "Check that the `mullvad' executable is present."
@@ -102,7 +105,7 @@ If SILENTLY is non-nil, do not return the output."
   "Get the current `mullvad' status."
   (interactive)
   (let ((status (string-trim
-		 (mullvad-shell-command (format "%s status" mullvad-executable))))
+		 (mullvad-shell-command "status")))
 	(time (mullvad-get-time-until-disconnect)))
     (message (concat status (when time (format ". Disconnecting in %s." time))))))
 
@@ -131,7 +134,7 @@ The association between cities and servers is defined in
   (let* ((server (mullvad-get-server 'city city))
 	 (command (format "%1$s relay set location %s; %1$s connect"
 			  mullvad-executable server)))
-    (mullvad-shell-command command (or mullvad-silent silently))
+    (mullvad-shell-command command silently)
     (while (not (mullvad-is-connected-p))
       (sleep-for 0.1))
     (mullvad-disconnect-after duration (or mullvad-silent silently))))
@@ -173,7 +176,7 @@ status."
   (interactive)
   (mullvad-cancel-timers)
   (when (mullvad-is-connected-p)
-    (mullvad-shell-command (format "%s disconnect" mullvad-executable))
+    (mullvad-shell-command "disconnect" silently)
     (mullvad-shh
      (while (string-match-p "Disconnecting..." (mullvad-status)))
      (sleep-for 0.01)))
