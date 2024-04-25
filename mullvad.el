@@ -34,7 +34,8 @@
   "Convenience functions for interfacing with `mullvad'."
   :group 'emacs)
 
-(defcustom mullvad-executable "mullvad"
+(defcustom mullvad-executable
+  (or (executable-find "mullvad") "")
   "Path to the `mullvad' executable."
   :type 'file
   :group 'mullvad)
@@ -87,7 +88,7 @@ always enter a duration manually."
 (defun mullvad-shell-command (command &optional silently)
   "Execute a `mullvad' shell COMMAND and return its output as a string.
 If SILENTLY is non-nil, do not return the output."
-  (mullvad-check-executable-exists)
+  (mullvad-ensure-executable)
   (let ((fun (lambda (command)
 	       (shell-command-to-string
 		(format "%s %s" mullvad-executable command)))))
@@ -96,10 +97,10 @@ If SILENTLY is non-nil, do not return the output."
 	 (funcall fun command))
       (funcall fun command))))
 
-(defun mullvad-check-executable-exists ()
-  "Check that the `mullvad' executable is present."
-  (unless (executable-find mullvad-executable)
-    (user-error "Mullvad not found. Please make sure it is installed and set `mullvad-executable' accordingly")))
+(defun mullvad-ensure-executable ()
+  "Ensure the Mullvad executable is present, or signal an error."
+  (unless (and mullvad-executable (file-executable-p mullvad-executable))
+    (error "Mullvad executable not found or is not executable: %s" mullvad-executable)))
 
 (defun mullvad-status ()
   "Get the current `mullvad' status."
@@ -116,7 +117,7 @@ If SILENTLY is non-nil, do not return the output."
   (interactive
    (list
     (progn
-      (mullvad-check-executable-exists)
+      (mullvad-ensure-executable)
       (completing-read "Select connection: " '(city website)))))
   (pcase connection
     ("city" (call-interactively #'mullvad-connect-to-city))
@@ -266,6 +267,7 @@ If more than one timer found, signal an error."
     ("s" "status"             mullvad-status)]])
 
 (make-obsolete 'mullvad-dispatch 'mullvad "0.2")
+(make-obsolete 'mullvad-check-executable-exists 'mullvad-ensure-executable "0.3")
 
 (provide 'mullvad)
 ;;; mullvad.el ends here
