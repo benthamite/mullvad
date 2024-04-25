@@ -53,11 +53,7 @@ To decide which server it should connect to, the package will prompt the user fo
 	  ("Wise" . "Madrid")))
 ```
 
-You can get a list of servers by running
-
-``` shell
-mullvad relay list
-```
+You can get a list of servers by running `mullvad-list-servers`.
 
 If you would like to be presented with a list of predefined choices when prompted to select a connection duration, you can customize the user option `mullvad-durations`. For example:
 
