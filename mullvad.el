@@ -168,6 +168,14 @@ a website. If SELECTION is nil, prompt the user for one"
 	 (selection (or selection (completing-read "Select: " alist))))
     (alist-get selection alist nil nil #'string=)))
 
+;;;###autoload
+(defun mullvad-list-servers ()
+  "List all available `mullvad' servers buffer."
+  (interactive)
+  (let ((output-buffer (generate-new-buffer "*Mullvad servers*")))
+    (shell-command "mullvad relay list" output-buffer)
+    (pop-to-buffer output-buffer)))
+
 (defun mullvad-is-connected-p ()
   "Return t iff connected to server."
   (mullvad-shh
@@ -269,7 +277,8 @@ If more than one timer found, signal an error."
     ("l" "later"              mullvad-disconnect-after)]
    [""
     ("d" "dwim"               mullvad-dwim)
-    ("s" "status"             mullvad-status)]])
+    ("s" "status"             mullvad-status)
+    ("r" "servers"            mullvad-list-servers)]])
 
 (make-obsolete 'mullvad-dispatch 'mullvad "0.2")
 (make-obsolete 'mullvad-check-executable-exists 'mullvad-ensure-executable "0.3")
