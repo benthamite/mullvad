@@ -72,6 +72,7 @@ always enter a duration manually."
 
 ;;;;; General
 
+;;;###autoload
 (defun mullvad-dwim ()
   "Connect if disconnected, and vice versa."
   (interactive)
@@ -102,6 +103,7 @@ If SILENTLY is non-nil, do not return the output."
   (unless (and mullvad-executable (file-executable-p mullvad-executable))
     (error "Mullvad executable not found or is not executable: %s" mullvad-executable)))
 
+;;;###autoload
 (defun mullvad-status ()
   "Get the current `mullvad' status."
   (interactive)
@@ -112,6 +114,7 @@ If SILENTLY is non-nil, do not return the output."
 
 ;;;;; Connect
 
+;;;###autoload
 (defun mullvad-connect (connection)
   "Connect to a Mullvad server, prompting the user for a CONNECTION type."
   (interactive
@@ -123,6 +126,7 @@ If SILENTLY is non-nil, do not return the output."
     ("city" (call-interactively #'mullvad-connect-to-city))
     ("website" (call-interactively #'mullvad-connect-to-website))))
 
+;;;###autoload
 (defun mullvad-connect-to-city (&optional city duration silently)
   "Connect to server associated with CITY for DURATION.
 If CITY or DURATION are nil, prompt the user accordingly.
@@ -140,6 +144,7 @@ The association between cities and servers is defined in
       (sleep-for 0.1))
     (mullvad-disconnect-after duration (or mullvad-silent silently))))
 
+;;;###autoload
 (defun mullvad-connect-to-website (&optional website duration silently)
   "Connect to server associated with WEBSITE for DURATION.
 Prompt the user to select from a list of websites and connection durations, and
