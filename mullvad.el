@@ -235,6 +235,12 @@ If WARN is non-nil, warn the user that the input is invalid."
 
 ;;;;; Timers
 
+(defun mullvad-cancel-timers ()
+  "Cancel any running Mullvad timers."
+  (when mullvad-timer
+    (cancel-timer mullvad-timer)
+    (setq mullvad-timer nil)))
+
 (defun mullvad-get-time-until-disconnect ()
   "Get remaining time in timer for `mullvad-disconnect'.
 If more than one timer found, signal an error."
@@ -256,12 +262,6 @@ If more than one timer found, signal an error."
      (if (> hours 0) (format "%d hours, " hours) "")
      (if (> minutes 0) (format "%d minutes, " minutes) "")
      (if (> seconds 0) (format "%d seconds" seconds) ""))))
-
-(defun mullvad-cancel-timers ()
-  "Cancel any running Mullvad timers."
-  (when mullvad-timer
-    (cancel-timer mullvad-timer)
-    (setq mullvad-timer nil)))
 
 ;;;;; Menu
 
