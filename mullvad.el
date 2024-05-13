@@ -136,11 +136,8 @@ STATE may be either `connected' or `disconnected'."
 ;;;###autoload
 (defun mullvad-connect (connection)
   "Connect to a Mullvad server, prompting the user for a CONNECTION type."
-  (interactive
-   (list
-    (progn
-      (mullvad-ensure-executable)
-      (completing-read "Select connection: " '(city website)))))
+  (interactive (list (progn (mullvad-ensure-executable)
+			    (completing-read "Select connection: " '(city website)))))
   (pcase connection
     ("city" (call-interactively #'mullvad-connect-to-city))
     ("website" (call-interactively #'mullvad-connect-to-website))))
