@@ -205,12 +205,7 @@ display the Mullvad status."
     (user-error "Not currently connected"))
   (let ((duration (or duration (mullvad-prompt-for-duration))))
     (mullvad-cancel-timers)
-    (when duration
-      (setq mullvad-timer
-	    (run-with-timer
-	     (* duration 60) nil
-	     (lambda ()
-	       (mullvad-disconnect (or mullvad-silent silently)))))))
+    (when duration (mullvad-set-timer duration silently)))
   (unless (or mullvad-silent silently) (mullvad-status)))
 
 (defun mullvad-prompt-for-duration (&optional warn)
@@ -234,6 +229,15 @@ If WARN is non-nil, warn the user that the input is invalid."
 	   (< 0 (string-to-number str)))))
 
 ;;;;; Timers
+
+(defun mullvad-set-timer (duration silently)
+  "Set a timer to disconnect after DURATION.
+If SILENTLY is non-nil, do not display a message when disconnecting."
+  (setq mullvad-timer
+	(run-with-timer
+	 (* duration 60) nil
+	 (lambda ()
+	   (mullvad-disconnect (or mullvad-silent silently))))))
 
 (defun mullvad-cancel-timers ()
   "Cancel any running Mullvad timers."
