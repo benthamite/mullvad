@@ -112,7 +112,7 @@ If SILENTLY is non-nil, do not return the output."
   "Get the current `mullvad' status."
   (interactive)
   (let ((status (string-trim
-		 (mullvad-shell-command "status")))
+		 (mullvad-shell-command (format "%s status" mullvad-executable))))
 	(time (mullvad-get-time-until-disconnect)))
     (message (concat status (when time (format ". Disconnecting in %s." time))))))
 
