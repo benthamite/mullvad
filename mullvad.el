@@ -102,11 +102,6 @@ If SILENTLY is non-nil, do not return the output."
 	(error "Calling command `%s' returned:\n\n%s" command message)
       message)))
 
-(defun mullvad-ensure-executable ()
-  "Ensure the Mullvad executable is present, or signal an error."
-  (unless (and mullvad-executable (file-executable-p mullvad-executable))
-    (error "Mullvad executable not found or is not executable: %s" mullvad-executable)))
-
 ;;;###autoload
 (defun mullvad-status ()
   "Get the current `mullvad' status."
@@ -115,6 +110,11 @@ If SILENTLY is non-nil, do not return the output."
 		 (mullvad-shell-command (format "%s status" mullvad-executable))))
 	(time (mullvad-get-time-until-disconnect)))
     (message (concat status (when time (format ". Disconnecting in %s." time))))))
+
+(defun mullvad-ensure-executable ()
+  "Ensure the Mullvad executable is present, or signal an error."
+  (unless (and mullvad-executable (file-executable-p mullvad-executable))
+    (error "Mullvad executable not found or is not executable: %s" mullvad-executable)))
 
 (defun mullvad-ensure-connection-state (state)
   "Ensure that te `mullvad' is in STATE.
