@@ -190,9 +190,12 @@ a website. If SELECTION is nil, prompt the user for one"
 (defun mullvad-list-servers ()
   "List all available `mullvad' servers buffer."
   (interactive)
-  (let ((output-buffer (generate-new-buffer "*Mullvad servers*")))
-    (shell-command "mullvad relay list" output-buffer)
-    (pop-to-buffer output-buffer)))
+  (let ((servers (mullvad-shell-command (format "%s relay list" mullvad-executable))))
+    (with-current-buffer (get-buffer-create "*Mullvad Servers*")
+      (erase-buffer)
+      (insert servers)
+      (goto-char (point-min)))
+    (switch-to-buffer "*Mullvad Servers*")))
 
 (defun mullvad-is-connected-p ()
   "Return t iff connected to server."
