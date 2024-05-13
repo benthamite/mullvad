@@ -90,13 +90,17 @@ always enter a duration manually."
   "Execute a `mullvad' shell COMMAND and return its output as a string.
 If SILENTLY is non-nil, do not return the output."
   (mullvad-ensure-executable)
-  (let ((fun (lambda (command)
-	       (shell-command-to-string
-		(format "%s %s" mullvad-executable command)))))
-    (if (or mullvad-silent silently)
-	(mullvad-shh
-	 (funcall fun command))
-      (funcall fun command))))
+  (if (or mullvad-silent silently)
+      (mullvad-shh
+       (mullvad-shell-command-handle-errors command))
+    (mullvad-shell-command-handle-errors command)))
+
+(defun mullvad-shell-command-handle-errors (command)
+  "Execute a `mullvad' shell COMMAND, handling errors."
+  (let ((message (shell-command-to-string command)))
+    (if (string-match "error" message)
+	(error "Calling command `%s' returned:\n\n%s" command message)
+      message)))
 
 (defun mullvad-ensure-executable ()
   "Ensure the Mullvad executable is present, or signal an error."
