@@ -38,19 +38,24 @@ To decide which server it should connect to, the package will prompt the user fo
 
 ``` emacs-lisp
 (setq mullvad-cities-and-servers
-	'(("London" . "gb-lon-wg-001")
-	  ("Madrid" . "es-mad-wg-101")
-	  ("Malmö" . "se-sto-wg-001")
-	  ("Frankfurt" . "de-fra-wg-001")
-	  ("New York" . "us-nyc-wg-601")
-	  ("São Paulo" . "br-sao-wg-001")))
+        '(("London" . "gb-lon-ovpn-005")
+          ("Madrid" . "es-mad-ovpn-202")
+          ("Malmö" . "se-sto-wg-005")
+          ("Frankfurt" . "de-fra-wg-005")
+          ("New York" . "us-nyc-ovpn-501")
+          ("San José" . "us-sjc-wg-101")
+          ("São Paulo" . "br-sao-wg-202")))
 
-(setq mullvad-websites-and-cities
-	'(("Criterion Channel" . "New York")
-	  ("HathiTrust" . "New York")
-	  ("Library Genesis" . "Malmö")
-	  ("Pirate Bay" . "Malmö")
-	  ("Wise" . "Madrid")))
+  (setq mullvad-websites-and-cities
+        '(("Betfair" . "London")
+          ("Criterion Channel" . "New York")
+          ("Gemini" . "New York")
+          ("HathiTrust" . "San José")
+          ("IMDb" . "New York")
+          ("Library Genesis" . "Malmö")
+          ("Pirate Bay" . "Malmö")
+          ("UC Berkeley" . "San José")
+          ("Wise" . "Madrid")))
 ```
 
 You can get a list of servers by running `mullvad-list-servers`.
