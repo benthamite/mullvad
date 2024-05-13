@@ -195,9 +195,9 @@ a website. If SELECTION is nil, prompt the user for one"
     (switch-to-buffer "*Mullvad Servers*")))
 
 (defun mullvad-is-connected-p ()
-  "Return t iff connected to server."
-  (mullvad-shh
-   (null (string-match-p "Disconnected" (mullvad-status)))))
+  "Return t if connected to Mullvad VPN, nil otherwise."
+  (let ((output (shell-command-to-string (format "%s status" mullvad-executable))))
+    (not (string-match-p "Disconnected" output))))
 
 (defun mullvad-ensure-connected ()
   "Ensure that `mullvad' is connected."
