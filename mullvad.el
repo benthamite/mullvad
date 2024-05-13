@@ -112,6 +112,21 @@ If SILENTLY is non-nil, do not return the output."
 	(time (mullvad-get-time-until-disconnect)))
     (message (concat status (when time (format ". Disconnecting in %s." time))))))
 
+(defun mullvad-ensure-connection-state (state)
+  "Ensure that te `mullvad' is in STATE.
+STATE may be either `connected' or `disconnected'."
+  (mullvad-shh
+   (let ((may-proceed-p (lambda ()
+			  (pcase state
+			    ('connected (mullvad-is-connected-p))
+			    ('disconnected (not (mullvad-is-connected-p)))
+			    (_ (user-error "Invalid state: `%s'" state)))))
+	 (retries 0))
+     (while (and (not (funcall may-proceed-p))
+		 (< retries 20))
+       (sleep-for 0.1)
+       (setq retries (1+ retries))))))
+
 ;;;;; Connect
 
 ;;;###autoload
@@ -139,9 +154,8 @@ The association between cities and servers is defined in
   (let* ((server (mullvad-get-server 'city city))
 	 (command (format "%1$s relay set location %s; %1$s connect"
 			  mullvad-executable server)))
-    (mullvad-shell-command command silently)
-    (while (not (mullvad-is-connected-p))
-      (sleep-for 0.1))
+    (mullvad-shell-command command 'silently)
+    (mullvad-ensure-connected)
     (mullvad-disconnect-after duration (or mullvad-silent silently))))
 
 ;;;###autoload
@@ -181,6 +195,10 @@ a website. If SELECTION is nil, prompt the user for one"
   (mullvad-shh
    (null (string-match-p "Disconnected" (mullvad-status)))))
 
+(defun mullvad-ensure-connected ()
+  "Ensure that `mullvad' is connected."
+  (mullvad-ensure-connection-state 'connected))
+
 ;;;;; Disconnect
 
 (defun mullvad-disconnect (&optional silently)
@@ -190,11 +208,13 @@ status."
   (interactive)
   (mullvad-cancel-timers)
   (when (mullvad-is-connected-p)
-    (mullvad-shell-command "disconnect" silently)
-    (mullvad-shh
-     (while (string-match-p "Disconnecting..." (mullvad-status)))
-     (sleep-for 0.01)))
+    (mullvad-shell-command (format "%s disconnect" mullvad-executable) silently)
+    (mullvad-ensure-disconnected))
   (unless (or mullvad-silent silently) (mullvad-status)))
+
+(defun mullvad-ensure-disconnected ()
+  "Ensure that `mullvad' is disconnected."
+  (mullvad-ensure-connection-state 'disconnected))
 
 (defun mullvad-disconnect-after (&optional duration silently)
   "Disconnect from server after DURATION, in minutes.
