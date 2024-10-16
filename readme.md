@@ -6,29 +6,33 @@ This simple Emacs package collects a few functions for interfacing with [Mullvad
 
 ## Installation
 
-### Manual installation
-
-Clone this repository and add this to your `init.el` file:
+Clone this repository to your Emacs load path and add this to your `init.el` file:
 
 ``` emacs-lisp
-(add-to-list 'load-path "path/to/internet-archive")
+(require 'mullvad)
 ```
 
-where `"path/to/internet-archive"` is the path to the local repository you just cloned.
+### With use package
 
-### Elpaca/Straight
-
-If you use the [elpaca](https://github.com/progfolio/elpaca) package manager, you just need to add this your `init.el` file:
+You can also install this package using `use-package`:
 
 ``` emacs-lisp
+;; with vc
 (use-package mullvad
-  :ensure (mullvad
-           :host github
-	   :repo "benthamite/mullvad")
-  :demand t)
-```
+  :vc (:url "https://github.com/benthamite/mullvad"))
 
-If you use [straight](https://github.com/radian-software/straight.el), just replace `:ensure` with `:straight` in the formula above.
+;; with elpaca
+(use-package mullvad
+  :ensure (:host github :repo "benthamite/mullvad"))
+
+;; with straight
+(use-package mullvad
+  :straight (:host github :repo "benthamite/mullvad"))
+
+;; with quelpa
+(use-package mullvad
+  :quelpa (mullvad :fetcher github :repo "benthamite/mullvad"))
+```
 
 ## Configuration
 
@@ -84,10 +88,14 @@ By default, `mullvad` emits a message every time it connects to a server or disc
 
 ```emacs-lisp
 (defun gptel-extras-set-mullvad (orig-fun &rest args)
-  "Enable `mullvad' when connecting to Gemini, then call ORIG-FUN with ARGS."
-  (when (string= gptel-model "gemini-pro")
-    (mullvad-connect-to-website "Gemini" 5 'silently)
-    (apply orig-fun args)))
+  "Enable `mullvad' when connecting to Gemini, then call ORIG-FUN with ARGS.
+Use to circumvent Gemini’s location restrictions."
+  (when (eq gptel-model 'gemini-pro)
+    (require 'mullvad)
+    (mullvad-connect-to-website "Gemini"
+				gptel-extras-gemini-mullvad-disconnect-after
+				'silently))
+  (apply orig-fun args))
 
 (advice-add 'gptel-curl-get-response :around #'gptel-extras-set-mullvad)
 ```
