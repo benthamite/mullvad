@@ -12,9 +12,9 @@ Clone this repository to your Emacs load path and add this to your `init.el` fil
 (require 'mullvad)
 ```
 
-### With use package
+### With `use-package`
 
-You can also install this package using `use-package`:
+You can also install this package with `use-package`:
 
 ``` emacs-lisp
 ;; with vc
