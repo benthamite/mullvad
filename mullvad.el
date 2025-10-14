@@ -153,10 +153,13 @@ The association between cities and servers is defined in
 `mullvad-cities-and-servers'."
   (interactive)
   (let* ((server (mullvad-get-server 'city city))
-	 (command (format "%1$s relay set location %s; %1$s connect"
-			  mullvad-executable server)))
-    (mullvad-shell-command command 'silently)
-    (mullvad-ensure-connected)
+         (status (shell-command-to-string (format "%s status" mullvad-executable))))
+    (unless (and (mullvad-is-connected-p)
+                 (string-match-p (regexp-quote server) status))
+      (mullvad-shell-command (format "%1$s relay set location %s; %1$s connect"
+                                     mullvad-executable server)
+			     'silently)
+      (mullvad-ensure-connected))
     (mullvad-disconnect-after duration (or mullvad-silent silently))))
 
 ;;;###autoload
@@ -197,7 +200,7 @@ a website. If SELECTION is nil, prompt the user for one"
 (defun mullvad-is-connected-p ()
   "Return t if connected to Mullvad VPN, nil otherwise."
   (let ((output (shell-command-to-string (format "%s status" mullvad-executable))))
-    (not (string-match-p "Disconnected" output))))
+    (numberp (string-match-p "\\bConnected\\b" output))))
 
 (defun mullvad-ensure-connected ()
   "Ensure that `mullvad' is connected."
