@@ -19,6 +19,8 @@ This manual describes the features and customization options for the Emacs Lisp 
 
 =mullvad.el= provides an Emacs interface for [[https://mullvad.net/][Mullvad]], a privacy-focused VPN service. Rather than switching to a terminal or the Mullvad graphical application, you can connect, disconnect, and check your VPN status without leaving Emacs.
 
+The development repository is on [[https://github.com/benthamite/mullvad][GitHub]].
+
 The package is built around the idea that VPN connections are often tied to specific tasks: you connect to a particular city to access a geo-restricted website, and you want the connection to end automatically after a set period. To support this workflow, =mullvad.el= offers two layers of indirection:
 
 - *City-based connections.* You maintain an association list mapping city names to specific Mullvad server identifiers. When you connect, you choose a city and the package selects the corresponding server.
