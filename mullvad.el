@@ -2,7 +2,8 @@
 
 ;; Author: Pablo Stafforini
 ;; Maintainer: Pablo Stafforini
-;; Version: 0.3
+;; Version: 0.4
+;; Package-Requires: ((emacs "28.1") (transient "0.4"))
 
 ;; This file is not part of GNU Emacs
 
@@ -86,38 +87,48 @@ always enter a duration manually."
 	 (message-log-max nil))
      ,@body))
 
-(defun mullvad-shell-command (command &optional silently)
-  "Execute a `mullvad' shell COMMAND and return its output as a string.
-If SILENTLY is non-nil, do not return the output."
+(defun mullvad-run-command (&rest args)
+  "Run the Mullvad executable with ARGS and return its output as a string.
+Each element of ARGS is shell-quoted before being passed to the command."
   (mullvad-ensure-executable)
+  (let ((command (mapconcat #'shell-quote-argument
+			    (cons mullvad-executable args) " ")))
+    (shell-command-to-string command)))
+
+(defun mullvad-shell-command (silently &rest args)
+  "Execute a `mullvad' command with ARGS and return its output as a string.
+If SILENTLY is non-nil, suppress messages."
   (if (or mullvad-silent silently)
       (mullvad-shh
-       (mullvad-shell-command-handle-errors command))
-    (mullvad-shell-command-handle-errors command)))
+       (mullvad-shell-command-handle-errors args))
+    (mullvad-shell-command-handle-errors args)))
 
-(defun mullvad-shell-command-handle-errors (command)
-  "Execute a `mullvad' shell COMMAND, handling errors."
-  (let ((message (shell-command-to-string command)))
-    (if (string-match "error" message)
-	(error "Calling command `%s' returned:\n\n%s" command message)
-      message)))
+(defun mullvad-shell-command-handle-errors (args)
+  "Execute a `mullvad' command with ARGS, handling errors."
+  (let ((output (apply #'mullvad-run-command args)))
+    (if (string-match-p "\\`[Ee]rror\\b\\|\\berror:" output)
+	(error "Calling `mullvad %s' returned:\n\n%s"
+	       (mapconcat #'identity args " ") output)
+      output)))
 
 ;;;###autoload
 (defun mullvad-status ()
   "Get the current `mullvad' status."
   (interactive)
   (let ((status (string-trim
-		 (mullvad-shell-command (format "%s status" mullvad-executable))))
+		 (mullvad-shell-command nil "status")))
 	(time (mullvad-get-time-until-disconnect)))
     (message (concat status (when time (format ". Disconnecting in %s." time))))))
 
 (defun mullvad-ensure-executable ()
   "Ensure the Mullvad executable is present, or signal an error."
-  (unless (and mullvad-executable (file-executable-p mullvad-executable))
+  (unless (and mullvad-executable
+	       (not (string-empty-p mullvad-executable))
+	       (file-executable-p mullvad-executable))
     (error "Mullvad executable not found or is not executable: %s" mullvad-executable)))
 
 (defun mullvad-ensure-connection-state (state)
-  "Ensure that te `mullvad' is in STATE.
+  "Ensure that the `mullvad' is in STATE.
 STATE may be either `connected' or `disconnected'."
   (mullvad-shh
    (let ((may-proceed-p (lambda ()
@@ -140,7 +151,8 @@ STATE may be either `connected' or `disconnected'."
 			    (completing-read "Select connection: " '(city website)))))
   (pcase connection
     ("city" (call-interactively #'mullvad-connect-to-city))
-    ("website" (call-interactively #'mullvad-connect-to-website))))
+    ("website" (call-interactively #'mullvad-connect-to-website))
+    (_ (user-error "Invalid connection type: `%s'" connection))))
 
 ;;;###autoload
 (defun mullvad-connect-to-city (&optional city duration silently)
@@ -153,12 +165,11 @@ The association between cities and servers is defined in
 `mullvad-cities-and-servers'."
   (interactive)
   (let* ((server (mullvad-get-server 'city city))
-         (status (shell-command-to-string (format "%s status" mullvad-executable))))
-    (unless (and (mullvad-is-connected-p)
+         (status (mullvad-run-command "status")))
+    (unless (and (string-match-p "\\bConnected\\b" status)
                  (string-match-p (regexp-quote server) status))
-      (mullvad-shell-command (format "%1$s relay set location %s; %1$s connect"
-                                     mullvad-executable server)
-			     'silently)
+      (mullvad-shell-command 'silently "relay" "set" "location" server)
+      (mullvad-shell-command 'silently "connect")
       (mullvad-ensure-connected))
     (mullvad-disconnect-after duration (or mullvad-silent silently))))
 
@@ -179,27 +190,33 @@ The association between websites and cities is defined in
 (defun mullvad-get-server (connection &optional selection)
   "Return the Mullvad server associated with CONNECTION and SELECTION.
 CONNECTION can be either `city' or `website'. SELECTION can be either a city or
-a website. If SELECTION is nil, prompt the user for one"
+a website. If SELECTION is nil, prompt the user for one."
   (let* ((alist (pcase connection
 		  ('city mullvad-cities-and-servers)
 		  ('website mullvad-websites-and-cities)))
-	 (selection (or selection (completing-read "Select: " alist))))
-    (alist-get selection alist nil nil #'string=)))
+	 (selection (or selection (completing-read "Select: " alist nil t)))
+	 (result (alist-get selection alist nil nil #'string=)))
+    (unless result
+      (user-error "No server configured for `%s'" selection))
+    result))
 
 ;;;###autoload
 (defun mullvad-list-servers ()
-  "List all available `mullvad' servers buffer."
+  "List all available `mullvad' servers in a buffer."
   (interactive)
-  (let ((servers (mullvad-shell-command (format "%s relay list" mullvad-executable))))
+  (let ((servers (mullvad-shell-command nil "relay" "list")))
     (with-current-buffer (get-buffer-create "*Mullvad Servers*")
-      (erase-buffer)
-      (insert servers)
-      (goto-char (point-min)))
+      (let ((inhibit-read-only t))
+	(erase-buffer)
+	(insert servers)
+	(goto-char (point-min)))
+      (special-mode))
     (switch-to-buffer "*Mullvad Servers*")))
 
 (defun mullvad-is-connected-p ()
   "Return t if connected to Mullvad VPN, nil otherwise."
-  (let ((output (shell-command-to-string (format "%s status" mullvad-executable))))
+  (mullvad-ensure-executable)
+  (let ((output (mullvad-run-command "status")))
     (numberp (string-match-p "\\bConnected\\b" output))))
 
 (defun mullvad-ensure-connected ()
@@ -215,7 +232,7 @@ status."
   (interactive)
   (mullvad-cancel-timers)
   (when (mullvad-is-connected-p)
-    (mullvad-shell-command (format "%s disconnect" mullvad-executable) silently)
+    (mullvad-shell-command silently "disconnect")
     (mullvad-ensure-disconnected))
   (unless (or mullvad-silent silently) (mullvad-status)))
 
@@ -225,7 +242,7 @@ status."
 
 (defun mullvad-disconnect-after (&optional duration silently)
   "Disconnect from server after DURATION, in minutes.
-If DURATION is nil, prompt the user for one, If SILENTLY is non-nil, do not
+If DURATION is nil, prompt the user for one. If SILENTLY is non-nil, do not
 display the Mullvad status."
   (interactive)
   (unless (mullvad-is-connected-p)
@@ -245,15 +262,16 @@ If WARN is non-nil, warn the user that the input is invalid."
 	 (duration (if mullvad-durations
 		       (completing-read prompt (mapcar #'number-to-string mullvad-durations))
 		     (read-string prompt))))
-    (while (mullvad-invalid-duration-p duration)
-      (mullvad-prompt-for-duration 'warn))
-    (unless (string-empty-p duration)
-      (string-to-number duration))))
+    (if (mullvad-invalid-duration-p duration)
+	(mullvad-prompt-for-duration 'warn)
+      (unless (string-empty-p duration)
+	(string-to-number duration)))))
 
 (defun mullvad-invalid-duration-p (str)
-  "Return t iff STR is not a positive integer or an empty string."
+  "Return t iff STR is not a string representation of a positive integer.
+An empty string is considered valid (meaning no duration)."
   (not (or (string-empty-p str)
-	   (< 0 (string-to-number str)))))
+	   (string-match-p "\\`[1-9][0-9]*\\'" str))))
 
 ;;;;; Timers
 
@@ -273,30 +291,30 @@ If SILENTLY is non-nil, do not display a message when disconnecting."
     (setq mullvad-timer nil)))
 
 (defun mullvad-get-time-until-disconnect ()
-  "Get remaining time in timer for `mullvad-disconnect'.
-If more than one timer found, signal an error."
+  "Get remaining time in timer for `mullvad-disconnect'."
   (when mullvad-timer
     (let ((time (timer--time mullvad-timer)))
       (mullvad-format-time-string (time-subtract time (current-time))))))
 
 (defun mullvad-format-time-string (time)
-  "Format TIME to a string in the form `days:hours:minutes:seconds'."
-  (let* ((high (car time))
-	 (low (cadr time))
-	 (total-seconds (+ (* high (expt 2 16)) low))
+  "Format TIME to a human-readable string of days, hours, minutes, and seconds."
+  (let* ((total-seconds (max 0 (truncate (float-time time))))
 	 (days (/ total-seconds 86400))
 	 (hours (/ (% total-seconds 86400) 3600))
 	 (minutes (/ (% total-seconds 3600) 60))
-	 (seconds (% total-seconds 60)))
-    (concat
-     (if (> days 0) (format "%d days, " days) "")
-     (if (> hours 0) (format "%d hours, " hours) "")
-     (if (> minutes 0) (format "%d minutes, " minutes) "")
-     (if (> seconds 0) (format "%d seconds" seconds) ""))))
+	 (seconds (% total-seconds 60))
+	 (parts (list
+		 (when (> days 0) (format "%d days" days))
+		 (when (> hours 0) (format "%d hours" hours))
+		 (when (> minutes 0) (format "%d minutes" minutes))
+		 (when (> seconds 0) (format "%d seconds" seconds))))
+	 (parts (delq nil parts)))
+    (if parts
+	(string-join parts ", ")
+      "0 seconds")))
 
 ;;;;; Menu
 
-;; TODO: add silently option
 ;;;###autoload (autoload 'mullvad-dispatch "mullvad" nil t)
 (transient-define-prefix mullvad ()
   "`mullvad' menu."
