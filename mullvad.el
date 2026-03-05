@@ -304,10 +304,10 @@ If SILENTLY is non-nil, do not display a message when disconnecting."
 	 (minutes (/ (% total-seconds 3600) 60))
 	 (seconds (% total-seconds 60))
 	 (parts (list
-		 (when (> days 0) (format "%d days" days))
-		 (when (> hours 0) (format "%d hours" hours))
-		 (when (> minutes 0) (format "%d minutes" minutes))
-		 (when (> seconds 0) (format "%d seconds" seconds))))
+		 (when (> days 0) (format "%d %s" days (if (= days 1) "day" "days")))
+		 (when (> hours 0) (format "%d %s" hours (if (= hours 1) "hour" "hours")))
+		 (when (> minutes 0) (format "%d %s" minutes (if (= minutes 1) "minute" "minutes")))
+		 (when (> seconds 0) (format "%d %s" seconds (if (= seconds 1) "second" "seconds")))))
 	 (parts (delq nil parts)))
     (if parts
 	(string-join parts ", ")
