@@ -260,7 +260,7 @@ The regex uses \\\\b, so 'Error' must be a standalone word."
 
 (ert-deftest mullvad-test-format-time-days ()
   "Shows days for large durations."
-  (should (equal "1 days, 2 hours, 3 minutes, 4 seconds"
+  (should (equal "1 day, 2 hours, 3 minutes, 4 seconds"
                  (mullvad-format-time-string
                   (seconds-to-time (+ 86400 (* 2 3600) (* 3 60) 4))))))
 
@@ -270,8 +270,8 @@ The regex uses \\\\b, so 'Error' must be a standalone word."
                  (mullvad-format-time-string (seconds-to-time 600)))))
 
 (ert-deftest mullvad-test-format-time-exact-hour ()
-  "Exact hour omit minutes and seconds."
-  (should (equal "1 hours"
+  "Exact hour omits minutes and seconds."
+  (should (equal "1 hour"
                  (mullvad-format-time-string (seconds-to-time 3600)))))
 
 (ert-deftest mullvad-test-format-time-negative-clamped-to-zero ()
@@ -603,6 +603,187 @@ Should only call status (for check) and then disconnect-after path."
             (should (string-match-p "Connected" displayed))
             (should (string-match-p "Disconnecting in" displayed))))
       (mullvad-cancel-timers))))
+
+;;;; Previously skipped areas
+
+;;;;; mullvad-format-time-string (singular forms)
+
+(ert-deftest mullvad-test-format-time-singular-second ()
+  "1 second uses singular form."
+  (should (equal "1 second"
+                 (mullvad-format-time-string (seconds-to-time 1)))))
+
+(ert-deftest mullvad-test-format-time-singular-minute ()
+  "1 minute uses singular form."
+  (should (equal "1 minute"
+                 (mullvad-format-time-string (seconds-to-time 60)))))
+
+(ert-deftest mullvad-test-format-time-singular-all-units ()
+  "All units at 1 use singular."
+  (should (equal "1 day, 1 hour, 1 minute, 1 second"
+                 (mullvad-format-time-string
+                  (seconds-to-time (+ 86400 3600 60 1))))))
+
+(ert-deftest mullvad-test-format-time-plural-boundary ()
+  "2 of each unit uses plural."
+  (should (equal "2 days, 2 hours, 2 minutes, 2 seconds"
+                 (mullvad-format-time-string
+                  (seconds-to-time (+ (* 2 86400) (* 2 3600) (* 2 60) 2))))))
+
+;;;;; mullvad-prompt-for-duration
+
+(ert-deftest mullvad-test-prompt-for-duration-valid-number ()
+  "Returns integer for valid numeric input."
+  (cl-letf (((symbol-function 'read-string) (lambda (&rest _) "30")))
+    (let ((mullvad-durations nil))
+      (should (equal 30 (mullvad-prompt-for-duration))))))
+
+(ert-deftest mullvad-test-prompt-for-duration-empty-returns-nil ()
+  "Empty input returns nil (no duration)."
+  (cl-letf (((symbol-function 'read-string) (lambda (&rest _) "")))
+    (let ((mullvad-durations nil))
+      (should-not (mullvad-prompt-for-duration)))))
+
+(ert-deftest mullvad-test-prompt-for-duration-with-candidates ()
+  "Uses completing-read when mullvad-durations is set."
+  (let ((used-completing-read nil))
+    (cl-letf (((symbol-function 'completing-read)
+               (lambda (&rest _) (setq used-completing-read t) "60")))
+      (let ((mullvad-durations '(30 60 120)))
+        (mullvad-prompt-for-duration)
+        (should used-completing-read)))))
+
+(ert-deftest mullvad-test-prompt-for-duration-retries-on-invalid ()
+  "Re-prompts with warning when input is invalid."
+  (let ((call-count 0))
+    (cl-letf (((symbol-function 'read-string)
+               (lambda (prompt &rest _)
+                 (cl-incf call-count)
+                 (if (= call-count 1) "abc" "15"))))
+      (let ((mullvad-durations nil))
+        (should (equal 15 (mullvad-prompt-for-duration)))
+        (should (= call-count 2))))))
+
+;;;;; mullvad-ensure-connection-state (polling)
+
+(ert-deftest mullvad-test-ensure-connected-polls-until-connected ()
+  "Polls multiple times until connected."
+  (let ((poll-count 0))
+    (mullvad-test-with-mocks
+        '(("status" . "Connecting...")
+          ("status" . "Connecting...")
+          ("status" . "Connected to gb-lon-wg-001"))
+      (cl-letf (((symbol-function 'sleep-for) (lambda (_) (cl-incf poll-count))))
+        (mullvad-ensure-connected)
+        ;; Should have slept between polls
+        (should (>= poll-count 2))))))
+
+(ert-deftest mullvad-test-ensure-disconnected-polls-until-disconnected ()
+  "Polls until disconnected."
+  (let ((poll-count 0))
+    (mullvad-test-with-mocks
+        '(;; First two checks: still connected
+          ("status" . "Connected to gb-lon-wg-001")
+          ("status" . "Connected to gb-lon-wg-001")
+          ;; Third check: disconnected
+          ("status" . "Disconnected"))
+      (cl-letf (((symbol-function 'sleep-for) (lambda (_) (cl-incf poll-count))))
+        (mullvad-ensure-disconnected)
+        (should (>= poll-count 2))))))
+
+(ert-deftest mullvad-test-ensure-connected-gives-up-after-20-retries ()
+  "Stops polling after 20 retries without error."
+  (let ((poll-count 0)
+        ;; 21 calls needed: 1 initial check + 20 loop iterations.
+        ;; Use `cons' to create distinct objects (quoted literals would
+        ;; share identity, causing `delq' to remove all at once).
+        (mocks (cl-loop for _ from 0 to 20
+                        collect (cons "status" "Disconnecting..."))))
+    (mullvad-test-with-mocks mocks
+      (cl-letf (((symbol-function 'sleep-for) (lambda (_) (cl-incf poll-count))))
+        (mullvad-ensure-connected)
+        (should (= poll-count 20))))))
+
+;;;;; mullvad-connect-to-city with explicit duration
+
+(ert-deftest mullvad-test-connect-to-city-with-duration-sets-timer ()
+  "Passing a duration sets a disconnect timer."
+  (mullvad-test-with-mocks
+      '(;; status check: disconnected
+        ("status" . "Disconnected")
+        ;; relay set location
+        ("relay" . "Relay constraints updated")
+        ;; connect
+        ("connect" . "Connecting...")
+        ;; ensure-connected
+        ("status" . "Connected to gb-lon-wg-001")
+        ;; disconnect-after -> is-connected-p
+        ("status" . "Connected to gb-lon-wg-001")
+        ;; status display
+        ("status" . "Connected to gb-lon-wg-001"))
+    (unwind-protect
+        (progn
+          (mullvad-connect-to-city "London" 30 nil)
+          (should mullvad-timer))
+      (mullvad-cancel-timers))))
+
+;;;;; mullvad-connect dispatch for valid types
+
+(ert-deftest mullvad-test-connect-dispatches-to-city ()
+  "Connection type 'city' dispatches to mullvad-connect-to-city."
+  (let ((called nil))
+    (mullvad-test-with-mocks nil
+      (cl-letf (((symbol-function 'call-interactively)
+                 (lambda (fn) (when (eq fn #'mullvad-connect-to-city)
+                                (setq called t)))))
+        (mullvad-connect "city")
+        (should called)))))
+
+(ert-deftest mullvad-test-connect-dispatches-to-website ()
+  "Connection type 'website' dispatches to mullvad-connect-to-website."
+  (let ((called nil))
+    (mullvad-test-with-mocks nil
+      (cl-letf (((symbol-function 'call-interactively)
+                 (lambda (fn) (when (eq fn #'mullvad-connect-to-website)
+                                (setq called t)))))
+        (mullvad-connect "website")
+        (should called)))))
+
+;;;;; mullvad-connect-to-website silently propagation
+
+(ert-deftest mullvad-test-connect-to-website-passes-silently ()
+  "The silently flag propagates from website to city."
+  (let ((city-silently nil))
+    (mullvad-test-with-mocks nil
+      (cl-letf (((symbol-function 'mullvad-connect-to-city)
+                 (lambda (&optional _city _dur silently)
+                   (setq city-silently silently))))
+        (mullvad-connect-to-website "BBC" nil t)
+        (should city-silently)))))
+
+;;;;; mullvad-list-servers buffer management
+
+(ert-deftest mullvad-test-list-servers-read-only ()
+  "Buffer is in special-mode (read-only)."
+  (mullvad-test-with-mocks
+      '(("relay" . "server-list-content"))
+    (save-window-excursion
+      (mullvad-list-servers)
+      (unwind-protect
+          (with-current-buffer "*Mullvad Servers*"
+            (should buffer-read-only))
+        (kill-buffer "*Mullvad Servers*")))))
+
+(ert-deftest mullvad-test-list-servers-point-at-beginning ()
+  "Point is at beginning of buffer after listing."
+  (mullvad-test-with-mocks
+      '(("relay" . "line1\nline2\nline3"))
+    (save-window-excursion
+      (mullvad-list-servers)
+      (unwind-protect
+          (with-current-buffer "*Mullvad Servers*"
+            (should (= (point) (point-min))))
+        (kill-buffer "*Mullvad Servers*")))))
 
 (provide 'mullvad-test)
 ;;; mullvad-test.el ends here
