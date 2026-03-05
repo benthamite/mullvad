@@ -206,34 +206,34 @@ The regex uses \\\\b, so 'Error' must be a standalone word."
 
 ;;;;; mullvad-get-server
 
-(ert-deftest mullvad-test-get-server-city-found ()
+(ert-deftest mullvad-test-get-server-for-city-found ()
   "Returns server for a known city."
   (mullvad-test-with-mocks nil
     (should (equal "gb-lon-wg-001"
-                   (mullvad-get-server 'city "London")))))
+                   (mullvad-get-server-for-city "London")))))
 
-(ert-deftest mullvad-test-get-server-city-not-found ()
+(ert-deftest mullvad-test-get-server-for-city-not-found ()
   "Signals user-error for an unknown city."
   (mullvad-test-with-mocks nil
-    (should-error (mullvad-get-server 'city "Atlantis")
+    (should-error (mullvad-get-server-for-city "Atlantis")
                   :type 'user-error)))
 
-(ert-deftest mullvad-test-get-server-website-found ()
+(ert-deftest mullvad-test-get-city-for-website-found ()
   "Returns city for a known website."
   (mullvad-test-with-mocks nil
     (should (equal "London"
-                   (mullvad-get-server 'website "BBC")))))
+                   (mullvad-get-city-for-website "BBC")))))
 
-(ert-deftest mullvad-test-get-server-website-not-found ()
+(ert-deftest mullvad-test-get-city-for-website-not-found ()
   "Signals user-error for an unknown website."
   (mullvad-test-with-mocks nil
-    (should-error (mullvad-get-server 'website "nonexistent.example.com")
+    (should-error (mullvad-get-city-for-website "nonexistent.example.com")
                   :type 'user-error)))
 
-(ert-deftest mullvad-test-get-server-uses-string-equality ()
+(ert-deftest mullvad-test-get-server-for-city-uses-string-equality ()
   "Lookup uses string= so 'london' (lowercase) should not match 'London'."
   (mullvad-test-with-mocks nil
-    (should-error (mullvad-get-server 'city "london")
+    (should-error (mullvad-get-server-for-city "london")
                   :type 'user-error)))
 
 ;;;;; mullvad-format-time-string
@@ -522,10 +522,8 @@ Should only call status (for check) and then disconnect-after path."
 
 (ert-deftest mullvad-test-ensure-connection-state-invalid ()
   "Invalid state signals user-error."
-  (mullvad-test-with-mocks
-      '(("status" . "Disconnected"))
-    (should-error (mullvad-ensure-connection-state 'bogus)
-                  :type 'user-error)))
+  (should-error (mullvad-ensure-connection-state 'bogus)
+                :type 'user-error))
 
 ;;;;; mullvad-set-timer
 

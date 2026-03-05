@@ -130,15 +130,14 @@ If SILENTLY is non-nil, suppress messages."
 (defun mullvad-ensure-connection-state (state)
   "Ensure that the `mullvad' is in STATE.
 STATE may be either `connected' or `disconnected'."
+  (unless (memq state '(connected disconnected))
+    (user-error "Invalid state: `%s'" state))
   (mullvad-shh
-   (let ((may-proceed-p (lambda ()
-			  (pcase state
-			    ('connected (mullvad-is-connected-p))
-			    ('disconnected (not (mullvad-is-connected-p)))
-			    (_ (user-error "Invalid state: `%s'" state)))))
-	 (retries 0))
-     (while (and (not (funcall may-proceed-p))
-		 (< retries 20))
+   (let ((retries 0))
+     (while (and (not (pcase state
+		        ('connected (mullvad-is-connected-p))
+		        ('disconnected (not (mullvad-is-connected-p)))))
+	        (< retries 20))
        (sleep-for 0.1)
        (setq retries (1+ retries))))))
 
@@ -164,12 +163,12 @@ If SILENTLY is non-nil, do not display the Mullvad status.
 The association between cities and servers is defined in
 `mullvad-cities-and-servers'."
   (interactive)
-  (let* ((server (mullvad-get-server 'city city))
+  (let* ((server (mullvad-get-server-for-city city))
          (status (mullvad-run-command "status")))
     (unless (and (string-match-p "\\bConnected\\b" status)
                  (string-match-p (regexp-quote server) status))
-      (mullvad-shell-command 'silently "relay" "set" "location" server)
-      (mullvad-shell-command 'silently "connect")
+      (mullvad-shell-command t "relay" "set" "location" server)
+      (mullvad-shell-command t "connect")
       (mullvad-ensure-connected))
     (mullvad-disconnect-after duration (or mullvad-silent silently))))
 
@@ -184,21 +183,28 @@ If SILENTLY is non-nil, do not display the Mullvad status.
 The association between websites and cities is defined in
 `mullvad-websites-and-cities'."
   (interactive)
-  (let ((city (mullvad-get-server 'website website)))
+  (let ((city (mullvad-get-city-for-website website)))
     (mullvad-connect-to-city city duration (or mullvad-silent silently))))
 
-(defun mullvad-get-server (connection &optional selection)
-  "Return the Mullvad server associated with CONNECTION and SELECTION.
-CONNECTION can be either `city' or `website'. SELECTION can be either a city or
-a website. If SELECTION is nil, prompt the user for one."
-  (let* ((alist (pcase connection
-		  ('city mullvad-cities-and-servers)
-		  ('website mullvad-websites-and-cities)))
-	 (selection (or selection (completing-read "Select: " alist nil t)))
-	 (result (alist-get selection alist nil nil #'string=)))
-    (unless result
-      (user-error "No server configured for `%s'" selection))
-    result))
+(defun mullvad-get-server-for-city (&optional city)
+  "Return the Mullvad server identifier for CITY.
+If CITY is nil, prompt the user to select from `mullvad-cities-and-servers'."
+  (let* ((city (or city (completing-read "Select city: "
+					 mullvad-cities-and-servers nil t)))
+	 (server (alist-get city mullvad-cities-and-servers nil nil #'string=)))
+    (unless server
+      (user-error "No server configured for city `%s'" city))
+    server))
+
+(defun mullvad-get-city-for-website (&optional website)
+  "Return the city associated with WEBSITE.
+If WEBSITE is nil, prompt the user to select from `mullvad-websites-and-cities'."
+  (let* ((website (or website (completing-read "Select website: "
+					       mullvad-websites-and-cities nil t)))
+	 (city (alist-get website mullvad-websites-and-cities nil nil #'string=)))
+    (unless city
+      (user-error "No city configured for website `%s'" website))
+    city))
 
 ;;;###autoload
 (defun mullvad-list-servers ()
@@ -315,7 +321,6 @@ If SILENTLY is non-nil, do not display a message when disconnecting."
 
 ;;;;; Menu
 
-;;;###autoload (autoload 'mullvad-dispatch "mullvad" nil t)
 (transient-define-prefix mullvad ()
   "`mullvad' menu."
   [["connect"
@@ -329,8 +334,9 @@ If SILENTLY is non-nil, do not display a message when disconnecting."
     ("s" "status"             mullvad-status)
     ("r" "servers"            mullvad-list-servers)]])
 
-(make-obsolete 'mullvad-dispatch 'mullvad "0.2")
-(make-obsolete 'mullvad-check-executable-exists 'mullvad-ensure-executable "0.3")
+;;;###autoload (autoload 'mullvad-dispatch "mullvad" nil t)
+(define-obsolete-function-alias 'mullvad-dispatch #'mullvad "0.2")
+(define-obsolete-function-alias 'mullvad-check-executable-exists #'mullvad-ensure-executable "0.3")
 
 (provide 'mullvad)
 ;;; mullvad.el ends here
