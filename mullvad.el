@@ -1,5 +1,7 @@
 ;;; mullvad.el --- Convenience functions for Mullvad -*- lexical-binding: t -*-
 
+;; Copyright (C) 2026 Pablo Stafforini
+
 ;; Author: Pablo Stafforini
 ;; Maintainer: Pablo Stafforini
 ;; Version: 0.4
