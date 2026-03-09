@@ -1,0 +1,700 @@
+This is mullvad.info, produced by makeinfo version 7.2 from
+mullvad.texi.
+
+INFO-DIR-SECTION Emacs misc features
+START-INFO-DIR-ENTRY
+* Mullvad: (mullvad).   Emacs interface for the Mullvad VPN.
+END-INFO-DIR-ENTRY
+
+
+File: mullvad.info,  Node: Top,  Next: Overview,  Up: (dir)
+
+mullvad: Emacs interface for the Mullvad VPN
+********************************************
+
+This manual describes the features and customization options for the
+Emacs Lisp file ‘mullvad.el’.
+
+* Menu:
+
+* Overview::
+* User options::
+* Commands::
+* Functions::
+* Transient menu::
+* Programmatic usage::
+* Troubleshooting::
+* License::
+* Indices::
+
+-- The Detailed Node Listing --
+
+Overview
+
+* Prerequisites::
+* Installation::
+
+Installation
+
+* Manual::
+* With use-package::
+
+User options
+
+* Executable path::
+* Server mappings::
+* Connection durations::
+* Silent mode::
+
+Commands
+
+* Connecting::
+* Disconnecting::
+* Smart connection toggle::
+* Checking status::
+* Listing servers::
+
+Functions
+
+* Connection state::
+* Command execution::
+* Server resolution::
+* Timer management::
+
+Troubleshooting
+
+* ``Mullvad executable not found or is not executable''::
+* ``No server configured for ...''::
+* Connection does not complete::
+
+Indices
+
+* Function index::
+* Variable index::
+
+
+File: mullvad.info,  Node: Overview,  Next: User options,  Prev: Top,  Up: Top
+
+1 Overview
+**********
+
+‘mullvad.el’ provides an Emacs interface for Mullvad
+(https://mullvad.net/), a privacy-focused VPN service.  Rather than
+switching to a terminal or the Mullvad graphical application, you can
+connect, disconnect, and check your VPN status without leaving Emacs.
+
+   The development repository is on GitHub
+(https://github.com/benthamite/mullvad).
+
+   The package is built around the idea that VPN connections are often
+tied to specific tasks: you connect to a particular city to access a
+geo-restricted website, and you want the connection to end automatically
+after a set period.  To support this workflow, ‘mullvad.el’ offers two
+layers of indirection:
+
+   • *City-based connections.*  You maintain an association list mapping
+     city names to specific Mullvad server identifiers.  When you
+     connect, you choose a city and the package selects the
+     corresponding server.
+   • *Website-based connections.*  You maintain a second association
+     list mapping website names to cities.  When you need to access a
+     particular website, you choose it by name and the package resolves
+     the chain: website to city to server.
+
+   Timed disconnections are a first-class feature.  Every connection can
+optionally include a duration, after which the package automatically
+disconnects.  This is especially useful for programmatic usage, where
+you want a VPN connection to last only as long as the operation that
+needs it.
+
+   The package requires the ‘mullvad’ command-line tool to be installed
+on your system.  It also depends on ‘transient’ for its interactive
+menu.
+
+* Menu:
+
+* Prerequisites::
+* Installation::
+
+
+File: mullvad.info,  Node: Prerequisites,  Next: Installation,  Up: Overview
+
+1.1 Prerequisites
+=================
+
+Before using this package, you must:
+
+  1. Install Mullvad VPN (https://mullvad.net/) on your system.
+  2. Log in via the terminal: ‘mullvad account login
+     YOUR_ACCOUNT_NUMBER’.  You can find your account number under
+     "Settings" > "Account" in the Mullvad graphical interface.
+  3. Ensure the ‘mullvad’ command-line tool is on your ‘exec-path’.  The
+     package attempts to locate it automatically when loaded; if it
+     cannot be found, you must set ‘mullvad-executable’ manually (*note
+     Executable path::).
+
+
+File: mullvad.info,  Node: Installation,  Prev: Prerequisites,  Up: Overview
+
+1.2 Installation
+================
+
+* Menu:
+
+* Manual::
+* With use-package::
+
+
+File: mullvad.info,  Node: Manual,  Next: With use-package,  Up: Installation
+
+1.2.1 Manual
+------------
+
+Clone the repository and add it to your ‘load-path’:
+
+     (add-to-list 'load-path "/path/to/mullvad")
+     (require 'mullvad)
+
+
+File: mullvad.info,  Node: With use-package,  Prev: Manual,  Up: Installation
+
+1.2.2 With use-package
+----------------------
+
+     ;; with vc (Emacs 30+)
+     (use-package mullvad
+       :vc (:url "https://github.com/benthamite/mullvad"))
+
+     ;; with elpaca
+     (use-package mullvad
+       :ensure (:host github :repo "benthamite/mullvad"))
+
+     ;; with straight
+     (use-package mullvad
+       :straight (:host github :repo "benthamite/mullvad"))
+
+     ;; with quelpa
+     (use-package mullvad
+       :quelpa (mullvad :fetcher github :repo "benthamite/mullvad"))
+
+
+File: mullvad.info,  Node: User options,  Next: Commands,  Prev: Overview,  Up: Top
+
+2 User options
+**************
+
+* Menu:
+
+* Executable path::
+* Server mappings::
+* Connection durations::
+* Silent mode::
+
+
+File: mullvad.info,  Node: Executable path,  Next: Server mappings,  Up: User options
+
+2.1 Executable path
+===================
+
+The user option ‘mullvad-executable’ specifies the path to the ‘mullvad’
+command-line tool.  It defaults to the result of ‘executable-find’ at
+load time, which means it will be set automatically if ‘mullvad’ is on
+your ‘exec-path’.
+
+   If the executable is installed in a non-standard location, or if
+‘executable-find’ fails to locate it (in which case the default is an
+empty string), you should set this option manually:
+
+     (setq mullvad-executable "/usr/local/bin/mullvad")
+
+   Every command validates this path before use.  If the file does not
+exist or is not executable, an error is signaled immediately rather than
+producing a confusing shell error downstream.
+
+
+File: mullvad.info,  Node: Server mappings,  Next: Connection durations,  Prev: Executable path,  Up: User options
+
+2.2 Server mappings
+===================
+
+The core of the package's routing logic lives in two association lists.
+
+   The user option ‘mullvad-cities-and-servers’ maps human-readable city
+names to Mullvad server identifiers.  Each entry is a cons cell of two
+strings.  The default value is an empty list; you must populate it for
+the connect commands to work.  For example:
+
+     (setq mullvad-cities-and-servers
+           '(("London" . "gb-lon-wg-001")
+             ("Madrid" . "es-mad-wg-101")
+             ("New York" . "us-nyc-wg-301")
+             ("Sao Paulo" . "br-sao-wg-202")))
+
+   To discover the available server identifiers, use ‘M-x
+mullvad-list-servers’ (*note Listing servers::).
+
+   The user option ‘mullvad-websites-and-cities’ adds a second level of
+indirection, mapping website names to the city names defined in
+‘mullvad-cities-and-servers’.  This is useful when you regularly access
+geo-restricted services and want to select them by name rather than
+remembering which city to use:
+
+     (setq mullvad-websites-and-cities
+           '(("Criterion Channel" . "New York")
+             ("Library Genesis" . "London")
+             ("HathiTrust" . "New York")))
+
+   When you connect via a website name, the package looks up the
+corresponding city in ‘mullvad-websites-and-cities’, then resolves that
+city to a server through ‘mullvad-cities-and-servers’.
+
+
+File: mullvad.info,  Node: Connection durations,  Next: Silent mode,  Prev: Server mappings,  Up: User options
+
+2.3 Connection durations
+========================
+
+The user option ‘mullvad-durations’ controls the list of predefined
+duration choices (in minutes) presented when the user is prompted for a
+connection duration.  The default value is ‘nil’, which means no
+predefined choices are offered and the user must type a duration
+manually each time.
+
+   When set to a list of integers, these values appear as completion
+candidates:
+
+     (setq mullvad-durations '(1 5 10 30 60 120))
+
+   The user can still type a custom duration not in the list.  Leaving
+the prompt blank (pressing ‘RET’ without input) means the connection
+will persist indefinitely until manually disconnected.
+
+   This option affects all commands that prompt for a duration,
+including ‘mullvad-connect-to-city’ and ‘mullvad-connect-to-website’
+when called interactively (*note Connecting::).
+
+
+File: mullvad.info,  Node: Silent mode,  Prev: Connection durations,  Up: User options
+
+2.4 Silent mode
+===============
+
+The user option ‘mullvad-silent’ controls whether the package emits
+status messages after connecting or disconnecting.  The default value is
+‘nil’, meaning messages are displayed in the echo area.
+
+   Set it to ‘t’ to suppress all status messages:
+
+     (setq mullvad-silent t)
+
+   This is particularly useful for programmatic usage, where you call
+connection functions from Lisp code and do not want messages cluttering
+the echo area.  Note that individual commands also accept a SILENTLY
+argument, which provides per-call control without changing the global
+setting.
+
+
+File: mullvad.info,  Node: Commands,  Next: Functions,  Prev: User options,  Up: Top
+
+3 Commands
+**********
+
+* Menu:
+
+* Connecting::
+* Disconnecting::
+* Smart connection toggle::
+* Checking status::
+* Listing servers::
+
+
+File: mullvad.info,  Node: Connecting,  Next: Disconnecting,  Up: Commands
+
+3.1 Connecting
+==============
+
+The package provides three commands for establishing a VPN connection,
+each offering a different level of specificity.
+
+   The command ‘mullvad-connect’ is the general entry point.  It first
+prompts you to choose a connection type--either "city" or "website"--and
+then delegates to the appropriate specialized command.
+
+   The command ‘mullvad-connect-to-city’ prompts for a city from
+‘mullvad-cities-and-servers’, resolves it to a server identifier, and
+connects.  It then prompts for a duration in minutes (*note Connection
+durations::).  If you are already connected to the requested server, the
+command skips the connection step and proceeds directly to setting (or
+resetting) the disconnect timer.
+
+   The command ‘mullvad-connect-to-website’ prompts for a website from
+‘mullvad-websites-and-cities’, resolves it to a city, and delegates to
+‘mullvad-connect-to-city’.  This is the most convenient option when you
+know which service you need to access but do not want to remember the
+server geography.
+
+   All three commands accept optional arguments for non-interactive use.
+For example, to connect to a website programmatically with a 30-minute
+timeout and no status messages:
+
+     (mullvad-connect-to-website "Criterion Channel" 30 'silently)
+
+
+File: mullvad.info,  Node: Disconnecting,  Next: Smart connection toggle,  Prev: Connecting,  Up: Commands
+
+3.2 Disconnecting
+=================
+
+The command ‘mullvad-disconnect’ terminates the current VPN connection
+immediately.  It also cancels any pending disconnect timer.  If you are
+not currently connected, the command does nothing beyond displaying the
+status.
+
+   The command ‘mullvad-disconnect-after’ sets a timer to disconnect
+after a specified number of minutes.  It prompts for a duration using
+the same mechanism as the connect commands (*note Connection
+durations::).  If a timer is already running, it is replaced with the
+new one.  This command signals an error if you are not currently
+connected.
+
+
+File: mullvad.info,  Node: Smart connection toggle,  Next: Checking status,  Prev: Disconnecting,  Up: Commands
+
+3.3 Smart connection toggle
+===========================
+
+The command ‘mullvad-dwim’ ("do what I mean") checks the current
+connection state and acts accordingly.  If you are connected, it
+disconnects.  If you are disconnected, it calls ‘mullvad-connect’
+interactively, prompting you for a connection type, server, and
+duration.
+
+   This is a convenient command to bind to a global key for quick VPN
+toggling.
+
+
+File: mullvad.info,  Node: Checking status,  Next: Listing servers,  Prev: Smart connection toggle,  Up: Commands
+
+3.4 Checking status
+===================
+
+The command ‘mullvad-status’ displays the current Mullvad VPN status in
+the echo area.  If a disconnect timer is running, the remaining time is
+appended to the status message (e.g., "Connected to gb-lon-wg-001.
+Disconnecting in 24 minutes, 30 seconds.").
+
+
+File: mullvad.info,  Node: Listing servers,  Prev: Checking status,  Up: Commands
+
+3.5 Listing servers
+===================
+
+The command ‘mullvad-list-servers’ fetches the complete list of
+available Mullvad relay servers and displays them in a dedicated
+‘*Mullvad Servers*’ buffer.  The buffer is set to ‘special-mode’, making
+it read-only and providing the standard key bindings for navigation (‘q’
+to quit, etc.).
+
+   Use this command to discover server identifiers when populating
+‘mullvad-cities-and-servers’ (*note Server mappings::).
+
+
+File: mullvad.info,  Node: Functions,  Next: Transient menu,  Prev: Commands,  Up: Top
+
+4 Functions
+***********
+
+* Menu:
+
+* Connection state::
+* Command execution::
+* Server resolution::
+* Timer management::
+
+
+File: mullvad.info,  Node: Connection state,  Next: Command execution,  Up: Functions
+
+4.1 Connection state
+====================
+
+The function ‘mullvad-is-connected-p’ returns ‘t’ if the VPN is
+currently connected and ‘nil’ otherwise.  It works by invoking the
+‘mullvad status’ command and checking the output for the word
+"Connected".
+
+   The functions ‘mullvad-ensure-connected’ and
+‘mullvad-ensure-disconnected’ poll the connection state in a loop,
+waiting up to two seconds for the VPN to reach the expected state.  They
+are called internally after connect and disconnect operations to ensure
+the command has taken effect before proceeding.  This is necessary
+because the Mullvad CLI returns immediately while the connection is
+still being established.
+
+
+File: mullvad.info,  Node: Command execution,  Next: Server resolution,  Prev: Connection state,  Up: Functions
+
+4.2 Command execution
+=====================
+
+The function ‘mullvad-run-command’ is the low-level interface for
+invoking the Mullvad CLI.  It accepts any number of string arguments,
+shell-quotes each one, and executes the resulting command.  All
+arguments are passed through ‘shell-quote-argument’ to prevent command
+injection.
+
+   The function ‘mullvad-shell-command’ wraps ‘mullvad-run-command’ with
+error handling and optional message suppression.  If the command output
+begins with "Error" or "error:", an Emacs error is signaled.  If the
+SILENTLY argument is non-nil (or ‘mullvad-silent’ is ‘t’), messages are
+suppressed during execution (*note Silent mode::).
+
+
+File: mullvad.info,  Node: Server resolution,  Next: Timer management,  Prev: Command execution,  Up: Functions
+
+4.3 Server resolution
+=====================
+
+The function ‘mullvad-get-server’ resolves a city or website name to a
+server identifier.  It accepts a CONNECTION argument (the symbol ‘city’
+or ‘website’) and an optional SELECTION string.  If SELECTION is ‘nil’,
+it prompts interactively with ‘completing-read’, requiring a match
+against the configured alist.
+
+   If the selection does not appear in the corresponding association
+list, a ‘user-error’ is signaled.  This prevents the package from
+silently passing invalid server identifiers to the Mullvad CLI.
+
+
+File: mullvad.info,  Node: Timer management,  Prev: Server resolution,  Up: Functions
+
+4.4 Timer management
+====================
+
+The package maintains at most one disconnect timer at a time, stored in
+the variable ‘mullvad-timer’.
+
+   The function ‘mullvad-set-timer’ creates a new timer that will call
+‘mullvad-disconnect’ after the specified number of minutes.
+
+   The function ‘mullvad-cancel-timers’ cancels the running timer, if
+any, and resets the variable to ‘nil’.  It is called automatically by
+both ‘mullvad-disconnect’ and ‘mullvad-disconnect-after’ before setting
+a new timer.
+
+   The function ‘mullvad-get-time-until-disconnect’ returns a
+human-readable string describing the remaining time (e.g., "24 minutes,
+30 seconds"), or ‘nil’ if no timer is active.  This is used by
+‘mullvad-status’ (*note Checking status::).
+
+
+File: mullvad.info,  Node: Transient menu,  Next: Programmatic usage,  Prev: Functions,  Up: Top
+
+5 Transient menu
+****************
+
+The package provides a ‘transient’ menu accessible via ‘M-x mullvad’.
+It groups all interactive commands under descriptive headings:
+
+Key   Command                        Description
+--------------------------------------------------------------
+‘c’   ‘mullvad-connect-to-city’      Connect by city
+‘w’   ‘mullvad-connect-to-website’   Connect by website
+‘n’   ‘mullvad-disconnect’           Disconnect now
+‘l’   ‘mullvad-disconnect-after’     Set a timed disconnect
+‘d’   ‘mullvad-dwim’                 Toggle connection
+‘s’   ‘mullvad-status’               Display current status
+‘r’   ‘mullvad-list-servers’         List available servers
+
+   The transient menu is the recommended entry point for interactive
+use.  You might bind it to a convenient key:
+
+     (global-set-key (kbd "C-c v") #'mullvad)
+
+
+File: mullvad.info,  Node: Programmatic usage,  Next: Troubleshooting,  Prev: Transient menu,  Up: Top
+
+6 Programmatic usage
+********************
+
+The package is designed to be called from Lisp code as well as
+interactively.  A common pattern is to wrap an operation that requires a
+specific VPN location in an ‘:around’ advice:
+
+     (defun my-set-mullvad-for-gemini (orig-fun &rest args)
+       "Connect to a US server before calling ORIG-FUN with ARGS."
+       (when (eq gptel-model 'gemini-pro)
+         (require 'mullvad)
+         (mullvad-connect-to-website "Gemini" 10 'silently))
+       (apply orig-fun args))
+
+     (advice-add 'gptel-curl-get-response :around #'my-set-mullvad-for-gemini)
+
+   The key points for programmatic use are:
+
+   • Pass explicit city/website and duration arguments to avoid
+     interactive prompts.
+   • Pass a non-nil SILENTLY argument (or set ‘mullvad-silent’ to ‘t’)
+     to suppress echo area messages.
+   • The connect commands are idempotent: if you are already connected
+     to the requested server, no reconnection occurs.
+
+
+File: mullvad.info,  Node: Troubleshooting,  Next: License,  Prev: Programmatic usage,  Up: Top
+
+7 Troubleshooting
+*****************
+
+* Menu:
+
+* ``Mullvad executable not found or is not executable''::
+* ``No server configured for ...''::
+* Connection does not complete::
+
+
+File: mullvad.info,  Node: ``Mullvad executable not found or is not executable'',  Next: ``No server configured for ...'',  Up: Troubleshooting
+
+7.1 "Mullvad executable not found or is not executable"
+=======================================================
+
+This error means ‘mullvad-executable’ does not point to a valid
+executable.  Verify that the Mullvad CLI is installed and check the
+value of the variable:
+
+     (message "%s" mullvad-executable)
+
+   If the path is empty or wrong, set it manually (*note Executable
+path::).  On macOS, the CLI is typically installed at
+‘/usr/local/bin/mullvad’.  On Linux, it is usually at
+‘/usr/bin/mullvad’.
+
+
+File: mullvad.info,  Node: ``No server configured for ...'',  Next: Connection does not complete,  Prev: ``Mullvad executable not found or is not executable'',  Up: Troubleshooting
+
+7.2 "No server configured for ..."
+==================================
+
+This error means you selected a city or website that does not appear in
+the corresponding association list.  Check ‘mullvad-cities-and-servers’
+or ‘mullvad-websites-and-cities’ and ensure the selection matches an
+existing key (*note Server mappings::).
+
+
+File: mullvad.info,  Node: Connection does not complete,  Prev: ``No server configured for ...'',  Up: Troubleshooting
+
+7.3 Connection does not complete
+================================
+
+After issuing a connect command, the package polls the connection state
+for up to two seconds.  If the connection has not been established by
+then, the package proceeds without error, but subsequent commands may
+behave unexpectedly.  This can happen if the Mullvad daemon is not
+running or if the network is unusually slow.  Verify that the daemon is
+running with ‘mullvad status’ in a terminal.
+
+
+File: mullvad.info,  Node: License,  Next: Indices,  Prev: Troubleshooting,  Up: Top
+
+8 License
+*********
+
+This package is free software, licensed under the GNU General Public
+License, version 3 or later.  See the ‘COPYING.txt’ file for the full
+text.
+
+
+File: mullvad.info,  Node: Indices,  Prev: License,  Up: Top
+
+9 Indices
+*********
+
+* Menu:
+
+* Function index::
+* Variable index::
+
+
+File: mullvad.info,  Node: Function index,  Next: Variable index,  Up: Indices
+
+9.1 Function index
+==================
+
+ [index ]
+* Menu:
+
+* mullvad:                               Transient menu.        (line 6)
+* mullvad-cancel-timers:                 Timer management.      (line 6)
+* mullvad-connect:                       Connecting.            (line 6)
+* mullvad-connect-to-city:               Connecting.            (line 6)
+* mullvad-connect-to-website:            Connecting.            (line 6)
+* mullvad-disconnect:                    Disconnecting.         (line 6)
+* mullvad-disconnect-after:              Disconnecting.         (line 6)
+* mullvad-dwim:                          Smart connection toggle.
+                                                                (line 6)
+* mullvad-ensure-connected:              Connection state.      (line 6)
+* mullvad-ensure-disconnected:           Connection state.      (line 6)
+* mullvad-get-server:                    Server resolution.     (line 6)
+* mullvad-get-time-until-disconnect:     Timer management.      (line 6)
+* mullvad-is-connected-p:                Connection state.      (line 6)
+* mullvad-list-servers:                  Listing servers.       (line 6)
+* mullvad-run-command:                   Command execution.     (line 6)
+* mullvad-set-timer:                     Timer management.      (line 6)
+* mullvad-shell-command:                 Command execution.     (line 6)
+* mullvad-status:                        Checking status.       (line 6)
+
+
+File: mullvad.info,  Node: Variable index,  Prev: Function index,  Up: Indices
+
+9.2 Variable index
+==================
+
+ [index ]
+* Menu:
+
+* mullvad-cities-and-servers:            Server mappings.       (line 6)
+* mullvad-durations:                     Connection durations.  (line 6)
+* mullvad-executable:                    Executable path.       (line 6)
+* mullvad-silent:                        Silent mode.           (line 6)
+* mullvad-websites-and-cities:           Server mappings.       (line 6)
+
+
+Tag Table:
+Node: Top214
+Node: Overview1251
+Node: Prerequisites2996
+Node: Installation3654
+Node: Manual3811
+Node: With use-package4051
+Node: User options4623
+Node: Executable path4832
+Node: Server mappings5658
+Node: Connection durations7172
+Node: Silent mode8159
+Node: Commands8864
+Node: Connecting9086
+Node: Disconnecting10471
+Node: Smart connection toggle11197
+Node: Checking status11729
+Node: Listing servers12147
+Node: Functions12709
+Node: Connection state12920
+Node: Command execution13704
+Node: Server resolution14509
+Node: Timer management15206
+Node: Transient menu16081
+Node: Programmatic usage17085
+Node: Troubleshooting18173
+Node: ``Mullvad executable not found or is not executable''18447
+Node: ``No server configured for ...''19112
+Node: Connection does not complete19629
+Node: License20219
+Node: Indices20478
+Node: Function index20611
+Node: Variable index22134
+
+End Tag Table
+
+
+Local Variables:
+coding: utf-8
+Info-documentlanguage: en
+End:

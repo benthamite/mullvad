@@ -325,6 +325,7 @@ If SILENTLY is non-nil, do not display a message when disconnecting."
 
 (transient-define-prefix mullvad ()
   "`mullvad' menu."
+  :info-manual "(mullvad)"
   [["connect"
     ("c" "to city"            mullvad-connect-to-city)
     ("w" "to website"         mullvad-connect-to-website)]
