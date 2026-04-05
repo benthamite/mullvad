@@ -21,21 +21,22 @@ A `transient` menu groups all commands under a single entry point (`M-x mullvad`
 ### package-vc (built-in since Emacs 30)
 
 ```emacs-lisp
-(package-vc-install "https://github.com/benthamite/mullvad")
+(use-package mullvad
+  :vc (:url "https://github.com/benthamite/mullvad"))
 ```
 
 ### Elpaca
 
 ```emacs-lisp
 (use-package mullvad
-  :ensure (mullvad :host github :repo "benthamite/mullvad"))
+  :ensure (:host github :repo "benthamite/mullvad"))
 ```
 
 ### straight.el
 
 ```emacs-lisp
-(straight-use-package
- '(mullvad :type git :host github :repo "benthamite/mullvad"))
+(use-package mullvad
+  :straight (:host github :repo "benthamite/mullvad"))
 ```
 
 ## Quick start
