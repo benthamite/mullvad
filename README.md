@@ -58,7 +58,7 @@ Run `M-x mullvad` to open the transient menu, then press `w` to connect by websi
 
 ## Documentation
 
-For a comprehensive description of all user options, commands, and functions, see the [manual](README.org).
+For a comprehensive description of all user options, commands, and functions, see the [manual](https://stafforini.com/notes/mullvad/).
 
 ## License
 
