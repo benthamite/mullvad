@@ -4,6 +4,7 @@
 @settitle mullvad: Emacs interface for the Mullvad VPN
 @documentencoding UTF-8
 @documentlanguage en
+@c AUTO-GENERATED from README.org via ox-texinfo — do not edit manually.
 @c %**end of header
 
 @dircategory Emacs misc features
@@ -184,7 +185,7 @@ The user option @code{mullvad-executable} specifies the path to the @samp{mullva
 If the executable is installed in a non-standard location, or if @code{executable-find} fails to locate it (in which case the default is an empty string), you should set this option manually:
 
 @lisp
-(setq mullvad-executable "/usr/local/bin/mullvad")
+(setopt mullvad-executable "/usr/local/bin/mullvad")
 @end lisp
 
 Every command validates this path before use. If the file does not exist or is not executable, an error is signaled immediately rather than producing a confusing shell error downstream.
@@ -199,7 +200,7 @@ The core of the package's routing logic lives in two association lists.
 The user option @code{mullvad-cities-and-servers} maps human-readable city names to Mullvad server identifiers. Each entry is a cons cell of two strings. The default value is an empty list; you must populate it for the connect commands to work. For example:
 
 @lisp
-(setq mullvad-cities-and-servers
+(setopt mullvad-cities-and-servers
       '(("London" . "gb-lon-wg-001")
         ("Madrid" . "es-mad-wg-101")
         ("New York" . "us-nyc-wg-301")
@@ -211,7 +212,7 @@ To discover the available server identifiers, use @samp{M-x mullvad-list-servers
 The user option @code{mullvad-websites-and-cities} adds a second level of indirection, mapping website names to the city names defined in @code{mullvad-cities-and-servers}. This is useful when you regularly access geo-restricted services and want to select them by name rather than remembering which city to use:
 
 @lisp
-(setq mullvad-websites-and-cities
+(setopt mullvad-websites-and-cities
       '(("Criterion Channel" . "New York")
         ("Library Genesis" . "London")
         ("HathiTrust" . "New York")))
@@ -228,7 +229,7 @@ The user option @code{mullvad-durations} controls the list of predefined duratio
 When set to a list of integers, these values appear as completion candidates:
 
 @lisp
-(setq mullvad-durations '(1 5 10 30 60 120))
+(setopt mullvad-durations '(1 5 10 30 60 120))
 @end lisp
 
 The user can still type a custom duration not in the list. Leaving the prompt blank (pressing @samp{RET} without input) means the connection will persist indefinitely until manually disconnected.
@@ -244,7 +245,7 @@ The user option @code{mullvad-silent} controls whether the package emits status 
 Set it to @code{t} to suppress all status messages:
 
 @lisp
-(setq mullvad-silent t)
+(setopt mullvad-silent t)
 @end lisp
 
 This is particularly useful for programmatic usage, where you call connection functions from Lisp code and do not want messages cluttering the echo area. Note that individual commands also accept a SILENTLY argument, which provides per-call control without changing the global setting.

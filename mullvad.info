@@ -205,7 +205,7 @@ your ‘exec-path’.
 ‘executable-find’ fails to locate it (in which case the default is an
 empty string), you should set this option manually:
 
-     (setq mullvad-executable "/usr/local/bin/mullvad")
+     (setopt mullvad-executable "/usr/local/bin/mullvad")
 
    Every command validates this path before use.  If the file does not
 exist or is not executable, an error is signaled immediately rather than
@@ -224,7 +224,7 @@ names to Mullvad server identifiers.  Each entry is a cons cell of two
 strings.  The default value is an empty list; you must populate it for
 the connect commands to work.  For example:
 
-     (setq mullvad-cities-and-servers
+     (setopt mullvad-cities-and-servers
            '(("London" . "gb-lon-wg-001")
              ("Madrid" . "es-mad-wg-101")
              ("New York" . "us-nyc-wg-301")
@@ -239,7 +239,7 @@ indirection, mapping website names to the city names defined in
 geo-restricted services and want to select them by name rather than
 remembering which city to use:
 
-     (setq mullvad-websites-and-cities
+     (setopt mullvad-websites-and-cities
            '(("Criterion Channel" . "New York")
              ("Library Genesis" . "London")
              ("HathiTrust" . "New York")))
@@ -263,7 +263,7 @@ manually each time.
    When set to a list of integers, these values appear as completion
 candidates:
 
-     (setq mullvad-durations '(1 5 10 30 60 120))
+     (setopt mullvad-durations '(1 5 10 30 60 120))
 
    The user can still type a custom duration not in the list.  Leaving
 the prompt blank (pressing ‘RET’ without input) means the connection
@@ -285,7 +285,7 @@ status messages after connecting or disconnecting.  The default value is
 
    Set it to ‘t’ to suppress all status messages:
 
-     (setq mullvad-silent t)
+     (setopt mullvad-silent t)
 
    This is particularly useful for programmatic usage, where you call
 connection functions from Lisp code and do not want messages cluttering
@@ -666,30 +666,30 @@ Node: Manual3811
 Node: With use-package4051
 Node: User options4623
 Node: Executable path4832
-Node: Server mappings5658
-Node: Connection durations7172
-Node: Silent mode8159
-Node: Commands8864
-Node: Connecting9086
-Node: Disconnecting10471
-Node: Smart connection toggle11197
-Node: Checking status11729
-Node: Listing servers12147
-Node: Functions12709
-Node: Connection state12920
-Node: Command execution13704
-Node: Server resolution14509
-Node: Timer management15206
-Node: Transient menu16081
-Node: Programmatic usage17085
-Node: Troubleshooting18173
-Node: ``Mullvad executable not found or is not executable''18447
-Node: ``No server configured for ...''19112
-Node: Connection does not complete19629
-Node: License20219
-Node: Indices20478
-Node: Function index20611
-Node: Variable index22134
+Node: Server mappings5660
+Node: Connection durations7178
+Node: Silent mode8167
+Node: Commands8874
+Node: Connecting9096
+Node: Disconnecting10481
+Node: Smart connection toggle11207
+Node: Checking status11739
+Node: Listing servers12157
+Node: Functions12719
+Node: Connection state12930
+Node: Command execution13714
+Node: Server resolution14519
+Node: Timer management15216
+Node: Transient menu16091
+Node: Programmatic usage17095
+Node: Troubleshooting18183
+Node: ``Mullvad executable not found or is not executable''18457
+Node: ``No server configured for ...''19122
+Node: Connection does not complete19639
+Node: License20229
+Node: Indices20488
+Node: Function index20621
+Node: Variable index22144
 
 End Tag Table
 
